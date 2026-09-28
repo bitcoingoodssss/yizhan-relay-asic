@@ -50,6 +50,12 @@ export interface Copy {
   deployerNote: string;
   chainPending: string;
   chainTodo: string;
+  tapeout: string;
+  gateTitle: string;
+  gateScene: string;
+  gateDemo: string;
+  gateProcessor: string;
+  gateTape: string;
   pricePending: string;
   motto: string;
   disclaimer: string;
@@ -126,6 +132,12 @@ export const COPY: Record<Locale, Copy> = {
     deployerNote: "部署钱包。不能填进 processor。",
     chainPending: "处理器、电路号或流片交易还是占位。软件真值表就是规格。这里不会编造链上的灯。",
     chainTodo: "地址已写入。读链上 eval 仍是 TODO，在接上真实调用之前不显示假灯。",
+    tapeout: "去 TapeOut 创建处理器",
+    gateTitle: "参赛还差两步",
+    gateScene: "场景已有：模型请求走联锁进路",
+    gateDemo: "演示已有：拨开关，灯由 evalRelay 点亮",
+    gateProcessor: "还没有 X Layer 主网上的 Processor",
+    gateTape: "还没有一次电路流片交易",
     pricePending: "流片后填写",
     motto: "对照灯，不对照币价。",
     disclaimer: "黑客松原型。不是投资建议。这颗 X Layer 处理器不能挖官方 $BEM。",
@@ -244,6 +256,12 @@ export const COPY: Record<Locale, Copy> = {
     deployerNote: "Deploy wallet. Do not put this in processor.",
     chainPending: "Processor, circuit id, or tape-out tx is still a placeholder. The software truth table is the spec. No invented on-chain lamps.",
     chainTodo: "Addresses are filled in. Reading on-chain eval is still TODO. No fake lamps until a real call exists.",
+    tapeout: "Create the processor on TapeOut",
+    gateTitle: "Two steps left to enter",
+    gateScene: "Scenario is ready: model requests as interlocking routes",
+    gateDemo: "Demo is ready: levers light evalRelay",
+    gateProcessor: "No Processor on X Layer mainnet yet",
+    gateTape: "No tape-out transaction yet",
     pricePending: "Set after tape-out",
     motto: "Check the lamps, not the price.",
     disclaimer: "Hackathon prototype. Not investment advice. This X Layer processor cannot mine official $BEM.",

@@ -205,65 +205,54 @@ export function RelayDesk() {
   return (
     <div className="min-h-screen text-fg" onPointerDown={unlockHorn}>
       <header className="border-b border-line bg-bg">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-4">
-          <div className="grid size-11 shrink-0 place-items-center rounded-panel border border-copper text-lg text-copper" aria-hidden>
-            驿
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
+          <img src="/yizhan-seal.webp" alt="" width={56} height={56} className="size-14 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-[11px] tracking-[0.22em] text-copper">YIZHAN · 196</p>
+            <h1 className="truncate text-xl leading-tight sm:text-2xl">{copy.title}</h1>
           </div>
-          <div className="min-w-0">
-            <p className="font-mono text-xs tracking-widest text-copper">YIZHAN RELAY · CHAIN 196</p>
-            <h1 className="text-2xl leading-tight sm:text-3xl">{copy.title}</h1>
-          </div>
-          <div className="ml-auto flex shrink-0 flex-col items-end gap-2">
-            <div role="group" aria-label={copy.langSwitch} className="flex overflow-hidden rounded-full border border-line">
-              {(["zh", "en"] as const).map((id) => (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={locale === id}
-                  className={"tap min-h-11 border-l border-line px-3 text-sm first:border-l-0 " + (locale === id ? "bg-copper text-ink" : "bg-bg text-muted")}
-                  onClick={() => setLocale(id)}
-                >
-                  {id === "zh" ? "中文" : "EN"}
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <div role="group" aria-label={copy.themeSwitch} className="flex overflow-hidden rounded-full border border-line">
-                {(["night", "day"] as const).map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    aria-pressed={theme === id}
-                    aria-label={id === "day" ? copy.day : copy.night}
-                    className={"tap min-h-11 min-w-11 border-l border-line px-3 text-lg first:border-l-0 " + (theme === id ? "bg-copper text-ink" : "bg-bg text-muted")}
-                    onClick={() => setTheme(id)}
-                  >
-                    {id === "day" ? "☀" : "☾"}
-                  </button>
-                ))}
-              </div>
+          <div className="flex h-11 w-full items-stretch overflow-hidden rounded-full border border-line bg-surface sm:w-auto">
+            {(["zh", "en"] as const).map((id) => (
               <button
+                key={id}
                 type="button"
-                aria-pressed={sound}
-                aria-label={copy.sound}
-                className={"tap min-h-11 min-w-11 rounded-full border border-line px-3 text-lg " + (sound ? "bg-copper text-ink" : "bg-bg text-muted")}
-                onClick={() => {
-                  const next = !sound;
-                  setSound(next);
-                  setHornMuted(!next);
-                  if (next) {
-                    unlockHorn();
-                    playHorn(out.action);
-                  }
-                }}
+                aria-pressed={locale === id}
+                aria-label={copy.langSwitch}
+                className={"tap grid min-w-11 flex-1 place-items-center border-l border-line px-3 text-sm first:border-l-0 sm:flex-none " + (locale === id ? "bg-copper text-ink" : "text-muted")}
+                onClick={() => setLocale(id)}
               >
-                {sound ? "♪" : "×"}
+                {id === "zh" ? "中文" : "EN"}
               </button>
-            </div>
-            <p className="hidden text-right font-mono text-xs text-muted sm:block">
-              {CONFIG.symbol} · {CONFIG.supply}
-              <span className="mt-1 block">{CONFIG.chainName}</span>
-            </p>
+            ))}
+            {(["night", "day"] as const).map((id) => (
+              <button
+                key={id}
+                type="button"
+                aria-pressed={theme === id}
+                aria-label={id === "day" ? copy.day : copy.night}
+                className={"tap grid min-w-11 flex-1 place-items-center border-l border-line text-lg sm:flex-none " + (theme === id ? "bg-copper text-ink" : "text-muted")}
+                onClick={() => setTheme(id)}
+              >
+                {id === "day" ? <SunMark /> : <MoonMark />}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-pressed={sound}
+              aria-label={copy.sound}
+              className={"tap grid min-w-11 flex-1 place-items-center border-l border-line text-lg sm:flex-none " + (sound ? "bg-copper text-ink" : "text-muted")}
+              onClick={() => {
+                const next = !sound;
+                setSound(next);
+                setHornMuted(!next);
+                if (next) {
+                  unlockHorn();
+                  playHorn(out.action);
+                }
+              }}
+            >
+              {sound ? "♪" : "×"}
+            </button>
           </div>
         </div>
       </header>
@@ -605,11 +594,47 @@ export function RelayDesk() {
             <Fact label="Unit price" value={CONFIG.unitPriceLabel === "set after deploy" ? copy.pricePending : CONFIG.unitPriceLabel} />
           </div>
           <p className="mt-3 text-sm text-fg">{chain.status === "unconfigured" ? copy.chainPending : copy.chainTodo}</p>
+          <div className="mt-3 rounded-panel border border-line bg-bg p-3">
+            <p className="text-sm text-copper">{copy.gateTitle}</p>
+            <ul className="mt-2 space-y-1 text-sm text-fg">
+              <li>{copy.gateScene}</li>
+              <li>{copy.gateDemo}</li>
+              <li>{copy.gateProcessor}</li>
+              <li>{copy.gateTape}</li>
+            </ul>
+            <a
+              className="tap mt-3 inline-flex min-h-11 items-center rounded-full bg-copper px-4 text-sm text-ink"
+              href="https://tapeout.net/#create/xlayer"
+              target="_blank"
+              rel="noreferrer"
+            >
+              {copy.tapeout}
+            </a>
+          </div>
           <p className="mt-2 text-sm text-muted">{copy.disclaimer}</p>
           <p className="mt-3 font-mono text-xs text-muted">{copy.motto}</p>
         </section>
       </main>
     </div>
+  );
+}
+
+function MoonMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+      <path fill="currentColor" d="M15.2 3.1a8.4 8.4 0 1 0 6.2 13.4A7.2 7.2 0 0 1 15.2 3.1z" />
+    </svg>
+  );
+}
+
+function SunMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+      <circle cx="12" cy="12" r="3.4" fill="currentColor" />
+      <g stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+        <path d="M12 2.4v2.3M12 19.3v2.3M2.4 12h2.3M19.3 12h2.3M5.1 5.1l1.6 1.6M17.3 17.3l1.6 1.6M18.9 5.1l-1.6 1.6M6.7 17.3l-1.6 1.6" />
+      </g>
+    </svg>
   );
 }
 
