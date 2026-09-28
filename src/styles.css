@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Noto Sans SC", "WenQuanYi Zen Hei", "PingFang SC", sans-serif;
+  --font-mono: "IBM Plex Mono", "WenQuanYi Zen Hei Mono", ui-monospace, monospace;
+
+  --color-bg: #0c0e0b;
+  --color-surface: #151814;
+  --color-surface-2: #1e241c;
+  --color-fg: #efe8d6;
+  --color-muted: #a39c8b;
+  --color-line: #2c3228;
+  --color-copper: #e08a3c;
+  --color-ink: #0c0e0b;
+  --color-phosphor: #c6f27a;
+  --color-phosphor-dim: #243018;
+  --color-amber: #e6b15a;
+  --color-amber-dim: #3a2e16;
+  --color-signal: #e06a52;
+  --color-signal-dim: #3a1e18;
+
+  --radius-panel: 1rem;
+}
+
+@layer base {
+  html {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-sans);
+    background-color: var(--color-bg);
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--color-line) 70%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--color-line) 70%, transparent) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    font-weight: 500;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-copper);
+    outline-offset: 2px;
+  }
+}
+
+.tap {
+  transition: scale 150ms ease-out;
+}
+
+.tap:active:not(:disabled) {
+  scale: 0.96;
+}
+
+.lamp {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: var(--color-bg);
+  box-shadow: inset 0 2px 5px color-mix(in oklab, black 50%, transparent);
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.lamp-on[data-lamp="allow"],
+.lamp-on[data-lamp="tierHi"] {
+  border-color: var(--color-phosphor);
+  background: var(--color-phosphor);
+  box-shadow: 0 0 16px color-mix(in oklab, var(--color-phosphor) 65%, transparent);
+}
+
+.lamp-on[data-lamp="degrade"] {
+  border-color: var(--color-amber);
+  background: var(--color-amber);
+  box-shadow: 0 0 16px color-mix(in oklab, var(--color-amber) 60%, transparent);
+}
+
+.lamp-on[data-lamp="refuse"] {
+  border-color: var(--color-signal);
+  background: var(--color-signal);
+  box-shadow: 0 0 16px color-mix(in oklab, var(--color-signal) 60%, transparent);
+}
+
+.lever {
+  position: relative;
+  width: 3.25rem;
+  height: 1.75rem;
+  flex: none;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: var(--color-bg);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
+}
+
+.lever-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: var(--color-muted);
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease;
+}
+
+.lever-on {
+  border-color: var(--color-phosphor);
+  background: var(--color-phosphor-dim);
+}
+
+.lever-on .lever-knob {
+  transform: translateX(1.4rem);
+  background: var(--color-phosphor);
+}
+
+.bead {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-line);
+  background: var(--color-bg);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.bead-on[data-track="lite"],
+.bead-on[data-track="std"],
+.bead-on[data-track="frontier"] {
+  border-color: var(--color-phosphor);
+  background: var(--color-phosphor);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--color-phosphor) 70%, transparent);
+}
+
+.bead-on[data-track="degraded"] {
+  border-color: var(--color-amber);
+  background: var(--color-amber);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--color-amber) 70%, transparent);
+}
+
+.bead-on[data-track="refuse"] {
+  border-color: var(--color-signal);
+  background: var(--color-signal);
+  box-shadow: 0 0 10px color-mix(in oklab, var(--color-signal) 70%, transparent);
+}
+
+.stamp[data-action="lite"],
+.stamp[data-action="std"],
+.stamp[data-action="frontier"] {
+  color: var(--color-phosphor);
+}
+
+.stamp[data-action="degraded"] {
+  color: var(--color-amber);
+}
+
+.stamp[data-action="refuse"] {
+  color: var(--color-signal);
+}
+
+.scan {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-copper), transparent);
+  background-size: 40% 100%;
+  animation: scan 1.1s ease-in-out infinite;
+}
+
+@keyframes scan {
+  from {
+    background-position: -40% 0;
+  }
+  to {
+    background-position: 140% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap,
+  .lamp,
+  .lever,
+  .lever-knob,
+  .bead,
+  .scan {
+    transition: none;
+    animation: none;
+  }
+}
