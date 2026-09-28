@@ -21,11 +21,11 @@ Transistors are tape-out materials only.
 | Deploy wallet | `0x0A9102cbaADEc6C2593Fb86f271A0431281e3E12` |
 | Create tx | `0x2b9ec5d182eb6a443f01fb991d16b4d2de4eccaa66bb5c71bd8caed4759bfe69` |
 | Supply / mint price | 32768 · 0.0001 OKB |
-| Minted / held | 22 · NAND 21 · LATCH 1 |
-| Relay circuit id | `PENDING` |
-| Tape-out tx | `0xPENDING` |
+| Minted / held | 151 · NAND 0 · LATCH 11 |
+| Relay circuit id | `1.2.250`（eval 编号 1） |
+| Tape-out tx | `0x0157d09e824742bf5c4d5ffada2a2deca3224c3368faa33ff29ff024f13da79f` |
 
-Processor 是工厂 `CPUCreated` 事件里的 circuits 合约，不是部署钱包。创建交易已在 X Layer 主网成功。电路数仍是 0，还不能算完成黑客松资格。详情页：https://tapeout.net/#l2/xlayer/0x7F2D3131A76D9aEfb49F44657DA6e1AcAC334687
+Processor 是工厂 `CPUCreated` 事件里的 circuits 合约，不是部署钱包。电路 `1.2.250` 已在 X Layer 流片成功，17 个输入、9 个输出、140 门、无时序。它是画布示例电路（100 + 50 = 150），不是 `evalRelay` 真值表。页面上的灯仍只调用本机 `evalRelay`。
 
 ## Boolean
 
