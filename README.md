@@ -21,11 +21,13 @@ Transistors are tape-out materials only.
 | Deploy wallet | `0x0A9102cbaADEc6C2593Fb86f271A0431281e3E12` |
 | Create tx | `0x2b9ec5d182eb6a443f01fb991d16b4d2de4eccaa66bb5c71bd8caed4759bfe69` |
 | Supply / mint price | 32768 · 0.0001 OKB |
-| Minted / held | 151 · NAND 0 · LATCH 11 |
-| Relay circuit id | `1.2.250`（eval 编号 1） |
-| Tape-out tx | `0x0157d09e824742bf5c4d5ffada2a2deca3224c3368faa33ff29ff024f13da79f` |
+| Minted / held | 154 · NAND 0 · LATCH 11 |
+| Circuit 1 | `1.2.250` · 示例 100+50=150 · 140 门 |
+| Circuit 1 tx | `0x0157d09e824742bf5c4d5ffada2a2deca3224c3368faa33ff29ff024f13da79f` |
+| Circuit 2 | `2.2.250` · 与非门 · eval 编号 2 · 3 门 |
+| Circuit 2 tx | `0xbec0069f986ba622f1246a0804bd460cc37135772b85aac1001871baac5cd9bc` |
 
-Processor 是工厂 `CPUCreated` 事件里的 circuits 合约，不是部署钱包。电路 `1.2.250` 已在 X Layer 流片成功，17 个输入、9 个输出、140 门、无时序。它是画布示例电路（100 + 50 = 150），不是 `evalRelay` 真值表。页面上的灯仍只调用本机 `evalRelay`。
+Processor 是工厂 `CPUCreated` 事件里的 circuits 合约，不是部署钱包。电路 `1.2.250` 是画布示例（100 + 50 = 150）。电路 `2.2.250` 是 2 输入 1 输出的与非门，3 个晶体管；`eval(2, bytes)` 的四个输入分别得到 1、1、1、0。两枚都不是 `evalRelay` 真值表。页面上的灯仍只调用本机 `evalRelay`。
 
 ## Boolean
 

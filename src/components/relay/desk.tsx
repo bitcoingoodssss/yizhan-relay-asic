@@ -595,8 +595,10 @@ export function RelayDesk() {
               value={`${CONFIG.minted} / ${CONFIG.supply}`}
               note={`NAND ${CONFIG.heldNand} · LATCH ${CONFIG.heldLatch}`}
             />
-            <Fact label="Relay circuit" value={CONFIG.relayCircuitId || "—"} />
-            <Fact label="Tape-out tx" value={CONFIG.relayTx || "—"} />
+            <Fact label="Sample circuit" value={CONFIG.relayCircuitId} note="100 + 50 = 150" />
+            <Fact label="Tape-out tx" value={CONFIG.relayTx} />
+            <Fact label="NAND circuit" value={CONFIG.nandCircuitId} note="2 in / 1 out" />
+            <Fact label="NAND tx" value={CONFIG.nandTx} />
             <Fact label="Ticket circuit" value={CONFIG.ticketCircuitId || "—"} />
             <Fact label="Unit price" value={CONFIG.unitPriceLabel === "set after deploy" ? copy.pricePending : CONFIG.unitPriceLabel} />
           </div>
