@@ -587,7 +587,9 @@ export function RelayDesk() {
               note={wallet.address ? (wallet.onXLayer ? `X Layer · ${wallet.okb ?? "—"} OKB` : copy.wrongChain) : copy.walletFactNote}
             />
             <Fact label="Processor" value={CONFIG.processor} note={copy.processorNote} />
+            <Fact label="Transistors" value={CONFIG.transistors} note={CONFIG.processorName} />
             <Fact label="Deployer" value={CONFIG.deployer} note={copy.deployerNote} />
+            <Fact label="Create tx" value={CONFIG.processorTx} />
             <Fact label="Relay circuit" value={CONFIG.relayCircuitId || "—"} />
             <Fact label="Tape-out tx" value={CONFIG.relayTx || "—"} />
             <Fact label="Ticket circuit" value={CONFIG.ticketCircuitId || "—"} />
@@ -604,7 +606,7 @@ export function RelayDesk() {
             </ul>
             <a
               className="tap mt-3 inline-flex min-h-11 items-center rounded-full bg-copper px-4 text-sm text-ink"
-              href="https://tapeout.net/#create/xlayer"
+              href={CONFIG.tapeoutProcessorUrl}
               target="_blank"
               rel="noreferrer"
             >

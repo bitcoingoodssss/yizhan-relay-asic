@@ -15,13 +15,16 @@ Transistors are tape-out materials only.
 | 字段 | 现在 |
 | --- | --- |
 | Chain | X Layer · 196 |
-| Processor | `0xYOUR_PROCESSOR_NOT_WALLET` |
-| Deploy wallet | `0xYOUR_DEPLOY_WALLET` |
+| Name / symbol | Yuan Station · YZST |
+| Processor（电路合约，详情页蓝地址） | `0x7F2D3131A76D9aEfb49F44657DA6e1AcAC334687` |
+| Transistors | `0xd32eDFD4385653e906c414BaB8B59483C752f362` |
+| Deploy wallet | `0x0A9102cbaADEc6C2593Fb86f271A0431281e3E12` |
+| Create tx | `0x2b9ec5d182eb6a443f01fb991d16b4d2de4eccaa66bb5c71bd8caed4759bfe69` |
+| Supply / mint price | 32768 · 0.0001 OKB |
 | Relay circuit id | `PENDING` |
 | Tape-out tx | `0xPENDING` |
-| Symbol / supply | YZST · 32768 |
 
-Processor 必须是工厂创建的合约，不是部署钱包。地址还是占位时，页面不会伪造链上 eval。
+Processor 是工厂 `CPUCreated` 事件里的 circuits 合约，不是部署钱包。创建交易已在 X Layer 主网成功。电路数仍是 0，还不能算完成黑客松资格。详情页：https://tapeout.net/#l2/xlayer/0x7F2D3131A76D9aEfb49F44657DA6e1AcAC334687
 
 ## Boolean
 
