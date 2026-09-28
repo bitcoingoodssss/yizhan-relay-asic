@@ -9,11 +9,16 @@ import { evalTicket } from "@/circuit/ticket";
 import type { ModelTier, RelayInput, RelayOutput } from "@/circuit/types";
 import { COPY, type Locale } from "@/i18n/copy";
 import { runMobileProof, type ProofProgress } from "@/pow/mobileProof";
+import { playHorn, setHornMuted, unlockHorn } from "@/audio/whistle";
+import { Foundry } from "./foundry";
+import { useTheme } from "./use-theme";
 import { useWallet } from "./use-wallet";
 import { WalletBar } from "./wallet-bar";
 
 const STORAGE_KEY = "yizhan-relay-word";
 const LANG_KEY = "yizhan-relay-lang";
+const STOCK_KEY = "yizhan-die-stock";
+const SOUND_KEY = "yizhan-sound";
 
 const OPEN_LOCKED: RelayInput = RELAY_TRUTH_CASES[1]!.in;
 const TIERS: ModelTier[] = [0, 1, 2];
@@ -80,16 +85,24 @@ export function RelayDesk() {
   const [showAll, setShowAll] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [proof, setProof] = useState<ProofView>({ phase: "idle" });
+  const [stock, setStock] = useState(0);
+  const [blocked, setBlocked] = useState(false);
+  const [sound, setSound] = useState(true);
   const playRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const heardRef = useRef<string | null>(null);
   const copy = COPY[locale];
   const wallet = useWallet();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const savedLang = localStorage.getItem(LANG_KEY);
     if (savedLang === "en" || savedLang === "zh") setLocale(savedLang);
     const saved = parseWord(localStorage.getItem(STORAGE_KEY) ?? "");
     if (saved) setInput(saved);
+    const savedStock = Number(localStorage.getItem(STOCK_KEY));
+    if (Number.isInteger(savedStock) && savedStock >= 0) setStock(savedStock);
+    if (localStorage.getItem(SOUND_KEY) === "off") setSound(false);
     setReady(true);
     return () => {
       if (playRef.current != null) window.clearInterval(playRef.current);
@@ -101,14 +114,28 @@ export function RelayDesk() {
     if (!ready) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(input));
     localStorage.setItem(LANG_KEY, locale);
+    localStorage.setItem(STOCK_KEY, String(stock));
+    localStorage.setItem(SOUND_KEY, sound ? "on" : "off");
+    setHornMuted(!sound);
     document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
-  }, [input, locale, ready]);
+  }, [input, locale, ready, stock, sound]);
 
   const out = evalRelay(input);
   const explained = explainRelay(input);
   const line = copy.narration[narrate(input, out)];
   const chain = chainEvalReady();
   const rows = useMemo(() => (showAll ? enumerateRelay() : []), [showAll]);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (heardRef.current === null) {
+      heardRef.current = out.action;
+      return;
+    }
+    if (heardRef.current === out.action) return;
+    heardRef.current = out.action;
+    playHorn(out.action);
+  }, [out.action, ready]);
 
   function stopPlay() {
     if (playRef.current != null) {
@@ -124,6 +151,12 @@ export function RelayDesk() {
   }
 
   function playSpec() {
+    if (stock < 1) {
+      setBlocked(true);
+      return;
+    }
+    setBlocked(false);
+    setStock((n) => Math.max(0, n - 1));
     stopPlay();
     let step = 0;
     setPlaying(true);
@@ -170,7 +203,7 @@ export function RelayDesk() {
   }
 
   return (
-    <div className="min-h-screen text-fg">
+    <div className="min-h-screen text-fg" onPointerDown={unlockHorn}>
       <header className="border-b border-line bg-bg">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-4">
           <div className="grid size-11 shrink-0 place-items-center rounded-panel border border-copper text-lg text-copper" aria-hidden>
@@ -194,6 +227,39 @@ export function RelayDesk() {
                 </button>
               ))}
             </div>
+            <div className="flex gap-2">
+              <div role="group" aria-label={copy.themeSwitch} className="flex overflow-hidden rounded-full border border-line">
+                {(["night", "day"] as const).map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={theme === id}
+                    aria-label={id === "day" ? copy.day : copy.night}
+                    className={"tap min-h-11 min-w-11 border-l border-line px-3 text-lg first:border-l-0 " + (theme === id ? "bg-copper text-ink" : "bg-bg text-muted")}
+                    onClick={() => setTheme(id)}
+                  >
+                    {id === "day" ? "☀" : "☾"}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                aria-pressed={sound}
+                aria-label={copy.sound}
+                className={"tap min-h-11 min-w-11 rounded-full border border-line px-3 text-lg " + (sound ? "bg-copper text-ink" : "bg-bg text-muted")}
+                onClick={() => {
+                  const next = !sound;
+                  setSound(next);
+                  setHornMuted(!next);
+                  if (next) {
+                    unlockHorn();
+                    playHorn(out.action);
+                  }
+                }}
+              >
+                {sound ? "♪" : "×"}
+              </button>
+            </div>
             <p className="hidden text-right font-mono text-xs text-muted sm:block">
               {CONFIG.symbol} · {CONFIG.supply}
               <span className="mt-1 block">{CONFIG.chainName}</span>
@@ -208,6 +274,18 @@ export function RelayDesk() {
       <WalletBar copy={copy} wallet={wallet} />
 
       <main className="mx-auto grid max-w-5xl gap-4 px-4 py-4 lg:grid-cols-2">
+        <Foundry
+          copy={copy}
+          wallet={wallet}
+          stock={stock}
+          running={playing}
+          out={out}
+          pass={explained.pass}
+          lite={explained.lite}
+          blocked={blocked}
+          onMinted={(batch) => setStock((n) => n + batch)}
+          onRun={playSpec}
+        />
         <section className="min-w-0 rounded-panel border border-line bg-surface p-4 max-lg:order-2">
           <PanelHead icon={<Cpu className="size-4 text-copper" />} title={copy.request} en="REQUEST" />
           <div role="radiogroup" aria-label={copy.modelGroup} className="grid grid-cols-3 overflow-hidden rounded-full border border-line">
@@ -351,6 +429,7 @@ export function RelayDesk() {
             })}
           </ul>
           <p className="mt-2 text-xs text-muted sm:hidden">{copy.trackNotes[out.action]}</p>
+          <p className="mt-2 font-mono text-xs text-copper">{copy.horns[out.action]}</p>
         </section>
 
         <section className="rounded-panel border border-line bg-surface p-4 lg:col-span-2">

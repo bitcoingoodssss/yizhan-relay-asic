@@ -65,6 +65,24 @@ export interface Copy {
   walletFailed: string;
   walletFact: string;
   walletFactNote: string;
+  themeSwitch: string;
+  day: string;
+  night: string;
+  sound: string;
+  okx: string;
+  foundry: string;
+  foundryLead: string;
+  stock: string;
+  mint: string;
+  minting: string;
+  mintWait: string;
+  mintOk: string;
+  mintFail: string;
+  mintRejected: string;
+  run: string;
+  running: string;
+  runNeed: string;
+  horns: Record<Action, string>;
   models: Record<ModelTier, string>;
   actions: Record<Action, string>;
   cases: Record<CaseNote, string>;
@@ -78,7 +96,7 @@ export interface Copy {
 export const COPY: Record<Locale, Copy> = {
   zh: {
     title: "驿站联锁台",
-    lead: "不是矿机。请求字进来，路由字出去。慢车免票，风险否决一切，拥塞只把高档压进侧线。晶体管只用于流片。",
+    lead: "不是挖币的矿机。在 OKX 的 X Layer 上付 OKB 铸造晶体管，流片机才按股道跑。每条股道一声汽笛。慢车免票，风险否决一切。",
     langSwitch: "语言",
     request: "请求字",
     route: "路由字",
@@ -123,6 +141,30 @@ export const COPY: Record<Locale, Copy> = {
     walletFailed: "钱包没有完成切换或读余额。再试一次。",
     walletFact: "本机钱包",
     walletFactNote: "连上后是你的 X Layer 地址。灯仍由本机 evalRelay 点亮，不会编造链上结果。",
+    themeSwitch: "外观",
+    day: "白天",
+    night: "夜片",
+    sound: "声音",
+    okx: "X Layer · OKX 链 · Gas 为 OKB",
+    foundry: "晶圆",
+    foundryLead: "支付 0.001 OKB 到烧毁地址，另付 gas，换 8 枚晶体管。钱花出去并且交易成功才入账。不发收益币，不挖官方 $BEM。",
+    stock: "库存",
+    mint: "铸造 8 枚",
+    minting: "等钱包确认…",
+    mintWait: "等 X Layer 回执…",
+    mintOk: "晶体管已入账。",
+    mintFail: "交易失败，没有入账。",
+    mintRejected: "你取消了支付。",
+    run: "开动流片机",
+    running: "流片机在跑",
+    runNeed: "库存为 0。先付 OKB 铸造，机器才能按股道跑。",
+    horns: {
+      lite: "货车长笛",
+      std: "客车双笛",
+      frontier: "动车尖笛",
+      degraded: "调车短笛",
+      refuse: "制动放气",
+    },
     models: { 0: "慢车", 1: "正线", 2: "特快" },
     actions: {
       lite: "慢车放行",
@@ -172,7 +214,7 @@ export const COPY: Record<Locale, Copy> = {
   },
   en: {
     title: "YiZhan Desk",
-    lead: "Not a miner. A request word in, a route word out. The slow train is free, risk vetoes everything, and congestion only pushes higher tiers onto the siding. Transistors are for tape-out.",
+    lead: "Not a coin miner. Pay OKB on OKX's X Layer to mint transistors, then the tape-out die runs the tracks. Each track has its own horn. Slow trains are free. Risk locks every route.",
     langSwitch: "Language",
     request: "Request",
     route: "Route",
@@ -217,6 +259,30 @@ export const COPY: Record<Locale, Copy> = {
     walletFailed: "The wallet did not finish the switch or the balance read. Try again.",
     walletFact: "This wallet",
     walletFactNote: "Your X Layer address after connect. Lamps still come from local evalRelay. No invented chain result.",
+    themeSwitch: "Appearance",
+    day: "Day",
+    night: "Night",
+    sound: "Sound",
+    okx: "X Layer · OKX chain · gas in OKB",
+    foundry: "Wafer",
+    foundryLead: "Pay 0.001 OKB to a burn address, plus gas, for 8 transistors. Stock updates only after the transaction succeeds. No yield token. This does not mine official $BEM.",
+    stock: "Stock",
+    mint: "Mint 8",
+    minting: "Waiting for the wallet…",
+    mintWait: "Waiting for the X Layer receipt…",
+    mintOk: "Transistors credited.",
+    mintFail: "The transaction failed. Nothing was credited.",
+    mintRejected: "Payment cancelled.",
+    run: "Run the die",
+    running: "Die is running",
+    runNeed: "Stock is 0. Pay OKB to mint before the machine can run the tracks.",
+    horns: {
+      lite: "freight horn",
+      std: "passenger horn",
+      frontier: "express horn",
+      degraded: "shunter toot",
+      refuse: "brake air",
+    },
     models: { 0: "Slow", 1: "Main", 2: "Express" },
     actions: {
       lite: "Slow clear",
