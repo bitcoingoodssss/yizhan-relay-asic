@@ -590,6 +590,11 @@ export function RelayDesk() {
             <Fact label="Transistors" value={CONFIG.transistors} note={CONFIG.processorName} />
             <Fact label="Deployer" value={CONFIG.deployer} note={copy.deployerNote} />
             <Fact label="Create tx" value={CONFIG.processorTx} />
+            <Fact
+              label="Minted"
+              value={`${CONFIG.minted} / ${CONFIG.supply}`}
+              note={`NAND ${CONFIG.heldNand} · LATCH ${CONFIG.heldLatch}`}
+            />
             <Fact label="Relay circuit" value={CONFIG.relayCircuitId || "—"} />
             <Fact label="Tape-out tx" value={CONFIG.relayTx || "—"} />
             <Fact label="Ticket circuit" value={CONFIG.ticketCircuitId || "—"} />

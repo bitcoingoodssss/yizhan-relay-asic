@@ -21,6 +21,7 @@ Transistors are tape-out materials only.
 | Deploy wallet | `0x0A9102cbaADEc6C2593Fb86f271A0431281e3E12` |
 | Create tx | `0x2b9ec5d182eb6a443f01fb991d16b4d2de4eccaa66bb5c71bd8caed4759bfe69` |
 | Supply / mint price | 32768 · 0.0001 OKB |
+| Minted / held | 22 · NAND 21 · LATCH 1 |
 | Relay circuit id | `PENDING` |
 | Tape-out tx | `0xPENDING` |
 
