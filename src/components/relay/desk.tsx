@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Cable, Cpu, ListChecks, Ticket, TrainFront } from "lucide-react";
 import { CONFIG } from "@/config";
 import { chainEvalReady } from "@/chain/status";
@@ -17,7 +17,6 @@ import { WalletBar } from "./wallet-bar";
 
 const STORAGE_KEY = "yizhan-relay-word";
 const LANG_KEY = "yizhan-relay-lang";
-const STOCK_KEY = "yizhan-die-stock";
 const SOUND_KEY = "yizhan-sound";
 
 const OPEN_LOCKED: RelayInput = RELAY_TRUTH_CASES[1]!.in;
@@ -85,7 +84,7 @@ export function RelayDesk() {
   const [showAll, setShowAll] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [proof, setProof] = useState<ProofView>({ phase: "idle" });
-  const [stock, setStock] = useState(0);
+  const [nand, setNand] = useState(CONFIG.heldNand);
   const [blocked, setBlocked] = useState(false);
   const [sound, setSound] = useState(true);
   const playRef = useRef<number | null>(null);
@@ -100,8 +99,6 @@ export function RelayDesk() {
     if (savedLang === "en" || savedLang === "zh") setLocale(savedLang);
     const saved = parseWord(localStorage.getItem(STORAGE_KEY) ?? "");
     if (saved) setInput(saved);
-    const savedStock = Number(localStorage.getItem(STOCK_KEY));
-    if (Number.isInteger(savedStock) && savedStock >= 0) setStock(savedStock);
     if (localStorage.getItem(SOUND_KEY) === "off") setSound(false);
     setReady(true);
     return () => {
@@ -114,11 +111,10 @@ export function RelayDesk() {
     if (!ready) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(input));
     localStorage.setItem(LANG_KEY, locale);
-    localStorage.setItem(STOCK_KEY, String(stock));
     localStorage.setItem(SOUND_KEY, sound ? "on" : "off");
     setHornMuted(!sound);
     document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
-  }, [input, locale, ready, stock, sound]);
+  }, [input, locale, ready, sound]);
 
   const out = evalRelay(input);
   const explained = explainRelay(input);
@@ -150,13 +146,14 @@ export function RelayDesk() {
     setInput(next);
   }
 
+  const reportNand = useCallback((next: number) => setNand(next), []);
+
   function playSpec() {
-    if (stock < 1) {
+    if (nand < 1) {
       setBlocked(true);
       return;
     }
     setBlocked(false);
-    setStock((n) => Math.max(0, n - 1));
     stopPlay();
     let step = 0;
     setPlaying(true);
@@ -266,13 +263,12 @@ export function RelayDesk() {
         <Foundry
           copy={copy}
           wallet={wallet}
-          stock={stock}
           running={playing}
           out={out}
           pass={explained.pass}
           lite={explained.lite}
           blocked={blocked}
-          onMinted={(batch) => setStock((n) => n + batch)}
+          onNand={reportNand}
           onRun={playSpec}
         />
         <section className="min-w-0 rounded-panel border border-line bg-surface p-4 max-lg:order-2">

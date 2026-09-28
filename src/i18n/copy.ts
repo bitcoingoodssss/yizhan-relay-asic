@@ -79,6 +79,11 @@ export interface Copy {
   foundry: string;
   foundryLead: string;
   stock: string;
+  mintedLabel: string;
+  priceLabel: string;
+  feeLabel: string;
+  payLabel: string;
+  readFail: string;
   mint: string;
   minting: string;
   mintWait: string;
@@ -159,17 +164,22 @@ export const COPY: Record<Locale, Copy> = {
     sound: "声音",
     okx: "X Layer · OKX 链 · Gas 为 OKB",
     foundry: "晶圆",
-    foundryLead: "台面上的铸造是本机彩排：0.001 OKB 打到烧毁地址，成功后流片机才能跑。官方晶体管在 TapeOut，单价 0.0001 OKB，这笔彩排铸不出来。",
-    stock: "库存",
-    mint: "铸造 8 枚",
+    foundryLead: "铸造进入 Yuan Station 的晶体管合约。单价、协议费和持有量从 X Layer 读出。签名时钱包里的金额必须等于本次合计。",
+    stock: "链上 NAND",
+    mintedLabel: "已铸造",
+    priceLabel: "单价",
+    feeLabel: "协议费",
+    payLabel: "本次支付",
+    readFail: "没读到链上库存。不发送猜测金额。",
+    mint: "铸造 1 枚 NAND",
     minting: "等钱包确认…",
     mintWait: "等 X Layer 回执…",
-    mintOk: "晶体管已入账。",
+    mintOk: "NAND 已铸到当前地址。",
     mintFail: "交易失败，没有入账。",
     mintRejected: "你取消了支付。",
     run: "开动流片机",
     running: "流片机在跑",
-    runNeed: "库存为 0。先付 OKB 铸造，机器才能按股道跑。",
+    runNeed: "链上 NAND 为 0。先铸造，流片机才按股道跑。动画不消耗晶体管。",
     horns: {
       lite: "货车长笛",
       std: "客车双笛",
@@ -283,17 +293,22 @@ export const COPY: Record<Locale, Copy> = {
     sound: "Sound",
     okx: "X Layer · OKX chain · gas in OKB",
     foundry: "Wafer",
-    foundryLead: "The button here is a local rehearsal: 0.001 OKB to a burn address, and the machine runs only after it succeeds. Official transistors are minted on TapeOut at 0.0001 OKB. This rehearsal does not mint them.",
-    stock: "Stock",
-    mint: "Mint 8",
+    foundryLead: "Minting calls the Yuan Station transistor contract. Unit price, protocol fee, and balances are read from X Layer. The wallet amount must match this total.",
+    stock: "On-chain NAND",
+    mintedLabel: "Minted",
+    priceLabel: "Unit price",
+    feeLabel: "Protocol fee",
+    payLabel: "This payment",
+    readFail: "Chain balances did not load. No guessed amount is sent.",
+    mint: "Mint 1 NAND",
     minting: "Waiting for the wallet…",
     mintWait: "Waiting for the X Layer receipt…",
-    mintOk: "Transistors credited.",
+    mintOk: "NAND minted to the connected address.",
     mintFail: "The transaction failed. Nothing was credited.",
     mintRejected: "Payment cancelled.",
     run: "Run the die",
     running: "Die is running",
-    runNeed: "Stock is 0. Pay OKB to mint before the machine can run the tracks.",
+    runNeed: "On-chain NAND is 0. Mint one before the machine runs the tracks. The animation does not spend a transistor.",
     horns: {
       lite: "freight horn",
       std: "passenger horn",
