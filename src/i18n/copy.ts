@@ -106,7 +106,7 @@ export interface Copy {
 
 export const COPY: Record<Locale, Copy> = {
   zh: {
-    title: "驿站联锁台",
+    title: "元站联锁台",
     lead: "不是挖币的矿机。在 OKX 的 X Layer 上付 OKB 铸造晶体管，流片机才按股道跑。每条股道一声汽笛。慢车免票，风险否决一切。",
     langSwitch: "语言",
     request: "请求字",
@@ -235,7 +235,7 @@ export const COPY: Record<Locale, Copy> = {
     },
   },
   en: {
-    title: "YiZhan Desk",
+    title: "Yuan Station",
     lead: "Not a coin miner. Pay OKB on OKX's X Layer to mint transistors, then the tape-out die runs the tracks. Each track has its own horn. Slow trains are free. Risk locks every route.",
     langSwitch: "Language",
     request: "Request",

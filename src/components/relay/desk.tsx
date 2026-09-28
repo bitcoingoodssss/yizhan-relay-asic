@@ -205,7 +205,7 @@ export function RelayDesk() {
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
           <img src="/yizhan-seal.webp" alt="" width={56} height={56} className="size-14 shrink-0 rounded-full" />
           <div className="min-w-0 flex-1">
-            <p className="font-mono text-[11px] tracking-[0.22em] text-copper">YIZHAN · 196</p>
+            <p className="font-mono text-[11px] tracking-[0.22em] text-copper">YUAN · 196</p>
             <h1 className="truncate text-xl leading-tight sm:text-2xl">{copy.title}</h1>
           </div>
           <div className="flex h-11 w-full items-stretch overflow-hidden rounded-full border border-line bg-surface sm:w-auto">
