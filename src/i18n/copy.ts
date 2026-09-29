@@ -93,6 +93,12 @@ export interface Copy {
   run: string;
   running: string;
   runNeed: string;
+  tapeRelay: string;
+  tapeRelayLead: string;
+  tapeRelayMint: string;
+  tapeRelayWait: string;
+  tapeRelayOk: string;
+  tapeRelayFee: string;
   horns: Record<Action, string>;
   models: Record<ModelTier, string>;
   actions: Record<Action, string>;
@@ -180,6 +186,12 @@ export const COPY: Record<Locale, Copy> = {
     run: "开动流片机",
     running: "流片机在跑",
     runNeed: "链上 NAND 为 0。先铸造，流片机才按股道跑。动画不消耗晶体管。",
+    tapeRelay: "把联锁流片上链",
+    tapeRelayLead: "27 个 NAND，6 个输入，4 个输出。NAND 不够时钱包先确认铸造，再确认 0.0013 OKB 流片费。",
+    tapeRelayMint: "先铸造缺少的 NAND…",
+    tapeRelayWait: "流片交易已发出…",
+    tapeRelayOk: "联锁已上链",
+    tapeRelayFee: "链上的流片费和 0.0013 OKB 不一致，没有发送。",
     horns: {
       lite: "货车长笛",
       std: "客车双笛",
@@ -309,6 +321,12 @@ export const COPY: Record<Locale, Copy> = {
     run: "Run the die",
     running: "Die is running",
     runNeed: "On-chain NAND is 0. Mint one before the machine runs the tracks. The animation does not spend a transistor.",
+    tapeRelay: "Tape out the relay",
+    tapeRelayLead: "27 NAND gates, 6 inputs, 4 outputs. If NAND is short, the wallet confirms the mint first, then the 0.0013 OKB tape-out fee.",
+    tapeRelayMint: "Minting the missing NAND…",
+    tapeRelayWait: "Tape-out sent…",
+    tapeRelayOk: "Relay is on-chain",
+    tapeRelayFee: "The on-chain tape-out fee is not 0.0013 OKB. Nothing was sent.",
     horns: {
       lite: "freight horn",
       std: "passenger horn",

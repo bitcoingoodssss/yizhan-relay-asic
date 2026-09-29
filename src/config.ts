@@ -2,6 +2,7 @@ export const CONFIG = {
   chainId: 196, // X Layer mainnet
   chainName: "X Layer",
   processorName: "Yuan Station",
+  cpuIndex: 250,
   symbol: "YZST",
   supply: 32768,
   minted: 154,

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Cpu } from "lucide-react";
 import { formatOkb, mintTransaction, mintValue, readStation, receiptOk, type StationBooks } from "@/chain/mint";
+import { TAPEOUT_FEE, circuitIdFromReceipt, readTapeFee, relayTapeTransaction, tapeLabel } from "@/chain/tapeout";
+import { relayNetlist } from "@/circuit/netlist";
 import { ensureXLayer, isUserRejected, pickProvider } from "@/chain/wallet";
 import { CONFIG } from "@/config";
 import { diePads } from "@/circuit/die";
@@ -32,12 +34,15 @@ export function Foundry({
   onRun: () => void;
 }) {
   const [phase, setPhase] = useState<Phase>("idle");
+  const [tapePhase, setTapePhase] = useState<Phase>("idle");
   const [hash, setHash] = useState<string | null>(null);
-  const [error, setError] = useState<"rejected" | "failed" | "read" | null>(null);
+  const [tapeId, setTapeId] = useState<string | null>(null);
+  const [error, setError] = useState<"rejected" | "failed" | "read" | "fee" | null>(null);
   const [books, setBooks] = useState<StationBooks | null>(null);
   const pads = diePads(out, pass, lite);
-  const busy = phase === "confirm" || phase === "pending";
+  const busy = phase === "confirm" || phase === "pending" || tapePhase === "confirm" || tapePhase === "pending";
   const holder = wallet.address ?? CONFIG.deployer;
+  const relayGates = BigInt(relayNetlist().nand);
 
   useEffect(() => {
     let stop = false;
@@ -103,6 +108,82 @@ export function Foundry({
     }
   }
 
+  async function waitReceipt(provider: ReturnType<typeof pickProvider>, sent: string) {
+    if (!provider) return false;
+    for (let i = 0; i < 30; i += 1) {
+      const receipt = await provider.request({ method: "eth_getTransactionReceipt", params: [sent] });
+      const ok = receiptOk(receipt);
+      if (ok === true) return receipt;
+      if (ok === false) return false;
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+    return false;
+  }
+
+  async function tape() {
+    if (!books) return;
+    if (!wallet.address) {
+      wallet.connect();
+      return;
+    }
+    const provider = pickProvider();
+    if (!provider) {
+      wallet.connect();
+      return;
+    }
+    setError(null);
+    setTapePhase("confirm");
+    try {
+      await ensureXLayer(provider);
+      const fee = await readTapeFee();
+      if (fee !== TAPEOUT_FEE) {
+        setTapePhase("fail");
+        setError("fee");
+        return;
+      }
+      const fresh = await readStation(wallet.address);
+      setBooks(fresh);
+      const missing = relayGates - fresh.nand;
+      if (missing > 0n) {
+        const minted = await provider.request({
+          method: "eth_sendTransaction",
+          params: [mintTransaction(wallet.address, fresh.mintPrice, fresh.protocolFee, missing)],
+        });
+        if (typeof minted !== "string" || !minted.startsWith("0x")) throw new Error("hash");
+        setHash(minted);
+        setTapePhase("pending");
+        if ((await waitReceipt(provider, minted)) === false) {
+          setTapePhase("fail");
+          setError("failed");
+          return;
+        }
+      }
+      const tx = relayTapeTransaction(wallet.address);
+      const sent = await provider.request({
+        method: "eth_sendTransaction",
+        params: [{ from: tx.from, to: tx.to, value: tx.value, data: tx.data }],
+      });
+      if (typeof sent !== "string" || !sent.startsWith("0x")) throw new Error("hash");
+      setHash(sent);
+      setTapePhase("pending");
+      const receipt = await waitReceipt(provider, sent);
+      if (receipt === false) {
+        setTapePhase("fail");
+        setError("failed");
+        return;
+      }
+      const id = circuitIdFromReceipt(receipt);
+      setTapeId(id ? tapeLabel(id) : null);
+      const after = await readStation(wallet.address);
+      setBooks(after);
+      onNand(Number(after.nand));
+      setTapePhase("done");
+    } catch (caught) {
+      setTapePhase("fail");
+      setError(isUserRejected(caught) ? "rejected" : "failed");
+    }
+  }
+
   const due = books ? mintValue(books.mintPrice, books.protocolFee) : null;
 
   return (
@@ -154,6 +235,14 @@ export function Foundry({
           </div>
           {books && books.nand < 1n || blocked ? <p className="mt-3 text-sm text-fg">{copy.runNeed}</p> : null}
           {error === "read" ? <p className="mt-3 text-sm text-fg">{copy.readFail}</p> : null}
+          {error === "fee" ? <p className="mt-3 text-sm text-fg">{copy.tapeRelayFee}</p> : null}
+          <div className="mt-4 border-t border-line pt-3">
+            <p className="text-sm text-muted">{copy.tapeRelayLead}</p>
+            <button type="button" className="tap mt-3 min-h-11 rounded-full bg-copper px-4 text-sm text-ink disabled:opacity-60" disabled={busy || !books} onClick={() => void tape()}>
+              {tapePhase === "confirm" ? copy.tapeRelayMint : tapePhase === "pending" ? copy.tapeRelayWait : copy.tapeRelay}
+            </button>
+            {tapePhase === "done" && tapeId ? <p className="mt-3 text-sm text-fg">{copy.tapeRelayOk} {tapeId}</p> : null}
+          </div>
           {phase === "pending" ? <div className="scan mt-3" /> : null}
           {phase === "done" ? <p className="mt-3 text-sm text-fg">{copy.mintOk}</p> : null}
           {phase === "fail" ? <p className="mt-3 text-sm text-fg">{error === "rejected" ? copy.mintRejected : copy.mintFail}</p> : null}
