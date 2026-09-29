@@ -7,9 +7,11 @@ import { evalRelay, RELAY_TRUTH_CASES } from "@/circuit/relay";
 import { evalTicket } from "@/circuit/ticket";
 import type { ModelTier, RelayInput, RelayOutput } from "@/circuit/types";
 import { COPY, type Locale } from "@/i18n/copy";
+import { PAPER } from "@/i18n/paper";
 import { runMobileProof, type ProofProgress } from "@/pow/mobileProof";
 import { playHorn, setHornMuted, unlockHorn } from "@/audio/whistle";
 import { Foundry } from "./foundry";
+import { Paper } from "./paper";
 import { useTheme } from "./use-theme";
 import { useWallet } from "./use-wallet";
 import { VehiclePanel } from "./vehicle";
@@ -92,6 +94,7 @@ export function RelayDesk() {
   const [sound, setSound] = useState(true);
   const [tab, setTab] = useState<TabId>("net");
   const [source, setSource] = useState<"hand" | "road" | "car">("hand");
+  const [view, setView] = useState<"desk" | "paper">("desk");
   const playRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const heardRef = useRef<string | null>(null);
@@ -234,6 +237,22 @@ export function RelayDesk() {
           </div>
           <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
             <div className="flex h-10 overflow-hidden rounded-full border border-line bg-surface">
+              {(["desk", "paper"] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={view === id}
+                  className={
+                    "tap grid min-w-11 place-items-center px-3 text-xs " +
+                    (view === id ? "bg-copper text-ink" : "text-muted")
+                  }
+                  onClick={() => setView(id)}
+                >
+                  {id === "desk" ? PAPER[locale].desk : PAPER[locale].paper}
+                </button>
+              ))}
+            </div>
+            <div className="flex h-10 overflow-hidden rounded-full border border-line bg-surface">
               {(["zh", "en"] as const).map((id) => (
                 <button
                   key={id}
@@ -286,6 +305,9 @@ export function RelayDesk() {
         </div>
       </header>
 
+      {view === "paper" ? (
+        <Paper locale={locale} />
+      ) : (
       <main className="mx-auto max-w-6xl px-4 py-5">
         <VehiclePanel
           copy={copy.vehicle}
@@ -650,6 +672,7 @@ export function RelayDesk() {
           ) : null}
         </div>
       </main>
+      )}
     </div>
   );
 }
