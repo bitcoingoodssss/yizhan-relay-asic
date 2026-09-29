@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Cpu } from "lucide-react";
 import { formatOkb, mintTransaction, mintValue, readStation, receiptOk, type StationBooks } from "@/chain/mint";
 import { TAPEOUT_FEE, circuitIdFromReceipt, readTapeFee, relayTapeTransaction, tapeLabel } from "@/chain/tapeout";
 import { relayNetlist } from "@/circuit/netlist";
@@ -187,72 +186,64 @@ export function Foundry({
   const due = books ? mintValue(books.mintPrice, books.protocolFee) : null;
 
   return (
-    <section className="min-w-0 rounded-panel border border-line bg-surface p-4">
-      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-lg">
-          <Cpu className="size-4 text-copper" />
-          {copy.foundry}
-        </h2>
-        <p className="flex items-center gap-2 font-mono text-xs tracking-widest text-muted">
-          <span className="okx-mark" aria-hidden>
-            <span />
-            <span />
-            <span />
-          </span>
-          {copy.okx}
-        </p>
+    <section className="min-w-0">
+      <p className="max-w-2xl text-sm leading-relaxed text-muted">{copy.foundryLead}</p>
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+        <Stat label={copy.stock} value={books ? books.nand.toString() : "…"} note={`LATCH ${books ? books.latch.toString() : "…"}`} />
+        <Stat
+          label={copy.mintedLabel}
+          value={books ? `${books.minted} / ${books.supply}` : "…"}
+          note={`${copy.priceLabel} ${books ? formatOkb(books.mintPrice) : "…"} OKB`}
+        />
+        <Stat label={copy.payLabel} value={due ? `${formatOkb(due)} OKB` : "…"} note={`${copy.feeLabel} ${books ? formatOkb(books.protocolFee) : "…"}`} />
       </div>
-      <p className="text-sm text-muted">{copy.foundryLead}</p>
-      <div className="mt-3 grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)]">
-        <div className={"die " + (running ? "die-live" : "")} aria-hidden>
-          {pads.map((on, index) => (
-            <span key={index} className={on ? "pad pad-on" : "pad"} />
-          ))}
-        </div>
-        <div className="min-w-0">
-          <p className="font-mono text-sm text-fg">
-            {copy.stock} <span className="text-2xl text-copper">{books ? books.nand.toString() : "…"}</span>
-            <span className="ml-3 text-muted">LATCH {books ? books.latch.toString() : "…"}</span>
-          </p>
-          <p className="mt-2 font-mono text-xs text-muted">
-            {copy.mintedLabel} {books ? `${books.minted} / ${books.supply}` : "…"}
-            <span className="mx-2">·</span>
-            {copy.priceLabel} {books ? formatOkb(books.mintPrice) : "…"} OKB
-            <span className="mx-2">·</span>
-            {copy.feeLabel} {books ? formatOkb(books.protocolFee) : "…"} OKB
-          </p>
-          <p className="mt-1 font-mono text-xs text-fg">
-            {copy.payLabel} {due ? formatOkb(due) : "…"} OKB
-          </p>
-          <p className="mt-1 text-sm text-muted">{copy.horns[out.action]}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" className="tap min-h-11 rounded-full bg-copper px-4 text-sm text-ink disabled:opacity-60" disabled={busy || !books} onClick={() => void mint()}>
-              {phase === "confirm" ? copy.minting : phase === "pending" ? copy.mintWait : copy.mint}
-            </button>
-            <button type="button" className="tap min-h-11 rounded-full border border-line px-4 text-sm disabled:opacity-60" disabled={running || !books || books.nand < 1n} onClick={onRun}>
-              {running ? copy.running : copy.run}
-            </button>
-          </div>
-          {books && books.nand < 1n || blocked ? <p className="mt-3 text-sm text-fg">{copy.runNeed}</p> : null}
-          {error === "read" ? <p className="mt-3 text-sm text-fg">{copy.readFail}</p> : null}
-          {error === "fee" ? <p className="mt-3 text-sm text-fg">{copy.tapeRelayFee}</p> : null}
-          <div className="mt-4 border-t border-line pt-3">
-            <p className="text-sm text-muted">{copy.tapeRelayLead}</p>
-            <button type="button" className="tap mt-3 min-h-11 rounded-full bg-copper px-4 text-sm text-ink disabled:opacity-60" disabled={busy || !books} onClick={() => void tape()}>
-              {tapePhase === "confirm" ? copy.tapeRelayMint : tapePhase === "pending" ? copy.tapeRelayWait : copy.tapeRelay}
-            </button>
-            {tapePhase === "done" && tapeId ? <p className="mt-3 text-sm text-fg">{copy.tapeRelayOk} {tapeId}</p> : null}
-          </div>
-          {phase === "pending" ? <div className="scan mt-3" /> : null}
-          {phase === "done" ? <p className="mt-3 text-sm text-fg">{copy.mintOk}</p> : null}
-          {phase === "fail" ? <p className="mt-3 text-sm text-fg">{error === "rejected" ? copy.mintRejected : copy.mintFail}</p> : null}
-          {hash ? (
-            <a className="mt-2 block font-mono text-xs break-all text-copper" href={`https://www.oklink.com/xlayer/tx/${hash}`} target="_blank" rel="noreferrer">
-              {hash}
-            </a>
-          ) : null}
-        </div>
+      <div className={"die mt-4 " + (running ? "die-live" : "")} aria-hidden>
+        {pads.map((on, index) => (
+          <span key={index} className={on ? "pad pad-on" : "pad"} />
+        ))}
       </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button type="button" className="tap min-h-11 rounded-full bg-copper px-4 text-sm text-ink disabled:opacity-60" disabled={busy || !books} onClick={() => void mint()}>
+          {phase === "confirm" ? copy.minting : phase === "pending" ? copy.mintWait : copy.mint}
+        </button>
+        <button type="button" className="tap min-h-11 rounded-full border border-line px-4 text-sm disabled:opacity-60" disabled={running || !books || books.nand < 1n} onClick={onRun}>
+          {running ? copy.running : copy.run}
+        </button>
+      </div>
+      {(books && books.nand < 1n) || blocked ? <p className="mt-3 text-sm">{copy.runNeed}</p> : null}
+      {error === "read" ? <p className="mt-3 text-sm">{copy.readFail}</p> : null}
+      {error === "fee" ? <p className="mt-3 text-sm">{copy.tapeRelayFee}</p> : null}
+      <div className="mt-5 border-t border-line pt-4">
+        <p className="max-w-2xl text-sm text-muted">{copy.tapeRelayLead}</p>
+        <button type="button" className="tap mt-3 min-h-11 rounded-full border border-line px-4 text-sm disabled:opacity-60" disabled={busy || !books} onClick={() => void tape()}>
+          {tapePhase === "confirm" ? copy.tapeRelayMint : tapePhase === "pending" ? copy.tapeRelayWait : copy.tapeRelay}
+        </button>
+        {tapePhase === "done" && tapeId ? (
+          <p className="mt-3 text-sm">
+            {copy.tapeRelayOk} {tapeId}
+          </p>
+        ) : null}
+      </div>
+      {phase === "pending" || tapePhase === "pending" ? <div className="scan mt-3" /> : null}
+      {phase === "done" ? <p className="mt-3 text-sm">{copy.mintOk}</p> : null}
+      {phase === "fail" || tapePhase === "fail" ? (
+        <p className="mt-3 text-sm">{error === "rejected" ? copy.mintRejected : copy.mintFail}</p>
+      ) : null}
+      {hash ? (
+        <a className="mt-2 block font-mono text-xs break-all text-copper" href={`https://www.oklink.com/xlayer/tx/${hash}`} target="_blank" rel="noreferrer">
+          {hash}
+        </a>
+      ) : null}
     </section>
+  );
+}
+
+function Stat({ label, value, note }: { label: string; value: string; note: string }) {
+  return (
+    <div className="rounded-panel border border-line bg-surface px-3 py-3">
+      <p className="font-mono text-xs text-muted">{label}</p>
+      <p className="mt-1 font-mono text-lg text-copper">{value}</p>
+      <p className="mt-1 text-xs text-muted">{note}</p>
+    </div>
   );
 }

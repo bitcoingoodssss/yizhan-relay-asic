@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Cable, Cpu, ListChecks, Ticket, TrainFront } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CONFIG } from "@/config";
 import { chainEvalReady } from "@/chain/status";
 import { enumerateRelay, explainRelay } from "@/circuit/explain";
@@ -13,6 +12,7 @@ import { playHorn, setHornMuted, unlockHorn } from "@/audio/whistle";
 import { Foundry } from "./foundry";
 import { useTheme } from "./use-theme";
 import { useWallet } from "./use-wallet";
+import { VehiclePanel } from "./vehicle";
 import { WalletBar } from "./wallet-bar";
 
 const STORAGE_KEY = "yizhan-relay-word";
@@ -44,6 +44,9 @@ const TRACKS: Array<{ id: RelayOutput["action"]; en: string }> = [
   { id: "degraded", en: "DEGRADED" },
   { id: "refuse", en: "REFUSE" },
 ];
+
+const TABS = ["net", "truth", "ticket", "wafer", "plate"] as const;
+type TabId = (typeof TABS)[number];
 
 type ProofView =
   | { phase: "idle" }
@@ -87,6 +90,8 @@ export function RelayDesk() {
   const [nand, setNand] = useState(CONFIG.heldNand);
   const [blocked, setBlocked] = useState(false);
   const [sound, setSound] = useState(true);
+  const [tab, setTab] = useState<TabId>("net");
+  const [source, setSource] = useState<"hand" | "road" | "car">("hand");
   const playRef = useRef<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const heardRef = useRef<string | null>(null);
@@ -141,16 +146,27 @@ export function RelayDesk() {
     setPlaying(false);
   }
 
-  function apply(next: RelayInput) {
+  function apply(next: RelayInput, keepCar = false) {
     stopPlay();
+    if (!keepCar) setSource("hand");
     setInput(next);
   }
+
+  const pushVehicle = useCallback((word: RelayInput) => {
+    if (playRef.current != null) {
+      window.clearInterval(playRef.current);
+      playRef.current = null;
+    }
+    setPlaying(false);
+    setInput(word);
+  }, []);
 
   const reportNand = useCallback((next: number) => setNand(next), []);
 
   function playSpec() {
     if (nand < 1) {
       setBlocked(true);
+      setTab("wafer");
       return;
     }
     setBlocked(false);
@@ -199,431 +215,440 @@ export function RelayDesk() {
     setProof({ phase: "idle" });
   }
 
+  const tabLabel: Record<TabId, string> = {
+    net: copy.netlist,
+    truth: copy.truth,
+    ticket: copy.ticket,
+    wafer: copy.foundry,
+    plate: copy.plaque,
+  };
+
   return (
-    <div className="min-h-screen text-fg" onPointerDown={unlockHorn}>
-      <header className="border-b border-line bg-bg">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-          <img src="/yizhan-seal.webp" alt="" width={56} height={56} className="size-14 shrink-0 rounded-full" />
-          <div className="min-w-0 flex-1">
-            <p className="font-mono text-[11px] tracking-[0.22em] text-copper">YUAN · 196</p>
-            <h1 className="truncate text-xl leading-tight sm:text-2xl">{copy.title}</h1>
+    <div className="min-h-screen bg-bg text-fg" onPointerDown={unlockHorn}>
+      <header className="sticky top-0 z-20 border-b border-line bg-bg/95 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5">
+          <img src={`${import.meta.env.BASE_URL}yizhan-seal.webp`} alt="" width={36} height={36} className="size-9 shrink-0 rounded-full" />
+          <div className="min-w-0">
+            <h1 className="truncate text-base leading-tight">{copy.title}</h1>
+            <p className="font-mono text-xs text-muted">X Layer · {CONFIG.relayCircuitId}</p>
           </div>
-          <div className="flex h-11 w-full items-stretch overflow-hidden rounded-full border border-line bg-surface sm:w-auto">
-            {(["zh", "en"] as const).map((id) => (
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <div className="flex h-10 overflow-hidden rounded-full border border-line bg-surface">
+              {(["zh", "en"] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={locale === id}
+                  aria-label={copy.langSwitch}
+                  className={
+                    "tap grid min-w-11 place-items-center px-3 text-xs " +
+                    (locale === id ? "bg-copper text-ink" : "text-muted")
+                  }
+                  onClick={() => setLocale(id)}
+                >
+                  {id === "zh" ? "中文" : "EN"}
+                </button>
+              ))}
+            </div>
+            <div className="flex h-10 overflow-hidden rounded-full border border-line bg-surface">
+              {(["night", "day"] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={theme === id}
+                  aria-label={id === "day" ? copy.day : copy.night}
+                  className={"tap grid size-10 place-items-center " + (theme === id ? "bg-copper text-ink" : "text-muted")}
+                  onClick={() => setTheme(id)}
+                >
+                  {id === "day" ? <SunMark /> : <MoonMark />}
+                </button>
+              ))}
               <button
-                key={id}
                 type="button"
-                aria-pressed={locale === id}
-                aria-label={copy.langSwitch}
-                className={"tap grid min-w-11 flex-1 place-items-center border-l border-line px-3 text-sm first:border-l-0 sm:flex-none " + (locale === id ? "bg-copper text-ink" : "text-muted")}
-                onClick={() => setLocale(id)}
+                aria-pressed={sound}
+                aria-label={copy.sound}
+                className={"tap grid size-10 place-items-center border-l border-line " + (sound ? "text-fg" : "text-muted")}
+                onClick={() => {
+                  const next = !sound;
+                  setSound(next);
+                  setHornMuted(!next);
+                  if (next) {
+                    unlockHorn();
+                    playHorn(out.action);
+                  }
+                }}
               >
-                {id === "zh" ? "中文" : "EN"}
+                <SoundMark on={sound} />
               </button>
-            ))}
-            {(["night", "day"] as const).map((id) => (
-              <button
-                key={id}
-                type="button"
-                aria-pressed={theme === id}
-                aria-label={id === "day" ? copy.day : copy.night}
-                className={"tap grid min-w-11 flex-1 place-items-center border-l border-line text-lg sm:flex-none " + (theme === id ? "bg-copper text-ink" : "text-muted")}
-                onClick={() => setTheme(id)}
-              >
-                {id === "day" ? <SunMark /> : <MoonMark />}
-              </button>
-            ))}
-            <button
-              type="button"
-              aria-pressed={sound}
-              aria-label={copy.sound}
-              className={"tap grid min-w-11 flex-1 place-items-center border-l border-line text-lg sm:flex-none " + (sound ? "bg-copper text-ink" : "text-muted")}
-              onClick={() => {
-                const next = !sound;
-                setSound(next);
-                setHornMuted(!next);
-                if (next) {
-                  unlockHorn();
-                  playHorn(out.action);
-                }
-              }}
-            >
-              {sound ? "♪" : "×"}
-            </button>
+            </div>
+            <WalletBar copy={copy} wallet={wallet} />
           </div>
         </div>
       </header>
 
-      <div className="border-b border-line bg-surface">
-        <p className="mx-auto max-w-5xl px-4 py-3 text-sm text-muted">{copy.lead}</p>
-      </div>
-      <WalletBar copy={copy} wallet={wallet} />
+      <main className="mx-auto max-w-6xl px-4 py-5">
+        <VehiclePanel
+          copy={copy.vehicle}
+          source={source}
+          paid={input.paid}
+          ticketOk={input.ticketOk}
+          requested={input.model}
+          onSource={setSource}
+          onWord={pushVehicle}
+        />
+        <section className="mt-4 grid items-stretch gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+          <article className="flex flex-col rounded-panel border border-line bg-surface p-5" aria-live="polite">
+            <p className="font-mono text-xs tracking-widest text-muted">{copy.route}</p>
+            <h2 className="stamp mt-3 text-4xl leading-none sm:text-5xl" data-action={out.action}>
+              {copy.actions[out.action]}
+            </h2>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted">{line}</p>
+            <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {LAMPS.map((lamp) => {
+                const on = out[lamp.key];
+                return (
+                  <div key={lamp.key} className="rounded-panel border border-line bg-bg px-3 py-2.5" role="status">
+                    <div className="flex items-center gap-2">
+                      <span className={"lamp " + (on ? "lamp-on" : "")} data-lamp={lamp.key} aria-hidden />
+                      <span className="font-mono text-xs text-muted">{lamp.net}</span>
+                    </div>
+                    <p className="mt-2 text-sm">
+                      {copy.lamps[lamp.key]}
+                      <span className="ml-1 font-mono text-xs text-muted">{on ? copy.hi : copy.lo}</span>
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-4 font-mono text-xs tabular-nums text-muted">
+              M{input.model} P{bit(input.paid)} B{bit(input.burst)} R{bit(input.risk)} T{bit(input.ticketOk)}
+              <span className="mx-2 text-line">/</span>
+              A{bit(out.allow)} D{bit(out.degrade)} R{bit(out.refuse)} H{bit(out.tierHi)}
+              <span className="ml-2 text-copper">{out.action}</span>
+            </p>
+          </article>
 
-      <main className="mx-auto grid max-w-5xl gap-4 px-4 py-4 lg:grid-cols-2">
-        <section className="min-w-0 rounded-panel border border-line bg-surface p-4">
-          <PanelHead icon={<Cpu className="size-4 text-copper" />} title={copy.request} en="REQUEST" />
-          <div role="radiogroup" aria-label={copy.modelGroup} className="grid grid-cols-3 overflow-hidden rounded-full border border-line">
-            {TIERS.map((tier) => {
-              const on = input.model === tier;
-              return (
-                <button
-                  key={tier}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  className={
-                    "tap min-h-12 border-l border-line px-2 first:border-l-0 " +
-                    (on ? "bg-copper text-ink" : "bg-bg text-muted")
-                  }
-                  onClick={() => apply({ ...input, model: tier })}
-                >
-                  <span className="block text-sm">{copy.models[tier]}</span>
-                  <span className={"block font-mono text-xs " + (on ? "text-ink" : "text-muted")}>{TIER_NET[tier]}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-3 grid gap-2">
-            {LEVERS.map((lever) => {
-              const on = input[lever.key];
-              return (
-                <button
-                  key={lever.key}
-                  type="button"
-                  role="switch"
-                  aria-checked={on}
-                  className="tap flex min-h-12 items-center justify-between gap-3 rounded-panel border border-line bg-bg px-3 py-2 text-left hover:border-copper"
-                  onClick={() => apply({ ...input, [lever.key]: !on } as RelayInput)}
-                >
-                  <span className="min-w-0">
-                    <span className="block text-sm">{copy.levers[lever.key].label}</span>
-                    <span className="block font-mono text-xs text-muted">
-                      {lever.net} · {copy.levers[lever.key].detail}
-                    </span>
-                  </span>
-                  <span className={"lever " + (on ? "lever-on" : "")} aria-hidden>
-                    <span className="lever-knob" />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <h3 className="font-mono text-xs tracking-widest text-muted">{copy.walk}</h3>
-            <button type="button" className="tap min-h-11 rounded-full border border-line px-3 text-sm text-fg" onClick={playing ? stopPlay : playSpec}>
-              {playing ? copy.stop : copy.walkPlay}
-            </button>
-          </div>
-          <div className="mt-2 min-w-0 overflow-x-auto">
-            <div className="flex w-max gap-2 pb-1">
-              {RELAY_TRUTH_CASES.map((item) => {
-                const active = sameWord(input, item.in);
+          <article className="rounded-panel border border-line bg-surface p-5">
+            <p className="font-mono text-xs tracking-widest text-muted">{copy.request}</p>
+            <div role="radiogroup" aria-label={copy.modelGroup} className="mt-3 grid grid-cols-3 overflow-hidden rounded-full border border-line">
+              {TIERS.map((tier) => {
+                const on = input.model === tier;
                 return (
                   <button
-                    key={item.note}
+                    key={tier}
                     type="button"
-                    title={item.note}
+                    role="radio"
+                    aria-checked={on}
                     className={
-                      "tap min-h-11 shrink-0 rounded-full border px-3 text-sm " +
-                      (active ? "border-copper bg-surface-2 text-fg" : "border-line bg-bg text-muted")
+                      "tap min-h-12 border-l border-line px-2 first:border-l-0 " + (on ? "bg-copper text-ink" : "bg-bg text-muted")
                     }
-                    onClick={() => apply(item.in)}
+                    onClick={() => apply({ ...input, model: tier }, source === "car")}
                   >
-                    {copy.cases[item.note as keyof typeof copy.cases] ?? item.note}
+                    <span className="block text-sm">{copy.models[tier]}</span>
+                    <span className={"block font-mono text-xs " + (on ? "text-ink" : "text-muted")}>{TIER_NET[tier]}</span>
                   </button>
                 );
               })}
             </div>
-          </div>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {LEVERS.map((lever) => {
+                const on = input[lever.key];
+                return (
+                  <button
+                    key={lever.key}
+                    type="button"
+                    role="switch"
+                    aria-checked={on}
+                    title={copy.levers[lever.key].detail}
+                    className="tap flex min-h-12 items-center justify-between gap-2 rounded-panel border border-line bg-bg px-3 text-left"
+                    onClick={() =>
+                      apply(
+                        { ...input, [lever.key]: !on } as RelayInput,
+                        source === "car" && (lever.key === "paid" || lever.key === "ticketOk"),
+                      )
+                    }
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-sm">{copy.levers[lever.key].label}</span>
+                      <span className="block font-mono text-xs text-muted">{lever.net}</span>
+                    </span>
+                    <span className={"lever " + (on ? "lever-on" : "")} aria-hidden>
+                      <span className="lever-knob" />
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <p className="font-mono text-xs text-muted">{copy.walk}</p>
+              <button
+                type="button"
+                className="tap min-h-10 rounded-full bg-copper px-4 text-sm text-ink"
+                onClick={playing ? stopPlay : playSpec}
+              >
+                {playing ? copy.stop : copy.walkPlay}
+              </button>
+            </div>
+          </article>
         </section>
 
-        <section className="rounded-panel border border-line bg-surface p-4" aria-live="polite">
-          <PanelHead icon={<TrainFront className="size-4 text-copper" />} title={copy.route} en="ROUTE" />
-          <div className="grid grid-cols-4 gap-2">
-            {LAMPS.map((lamp) => {
-              const on = out[lamp.key];
-              return (
-                <div key={lamp.key} className="flex flex-col items-center gap-2">
-                  <div
-                    className={"lamp " + (on ? "lamp-on" : "")}
-                    data-lamp={lamp.key}
-                    role="status"
-                    aria-label={`${lamp.net} ${on ? copy.hi : copy.lo}`}
-                  />
-                  <span className="w-full text-center font-mono text-xs break-all text-fg">{lamp.net}</span>
-                  <span className="text-center text-xs text-muted">
-                    {on ? copy.hi : copy.lo} · {copy.lamps[lamp.key]}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <p className="stamp mt-4 text-3xl leading-none" data-action={out.action}>
-            {copy.actions[out.action]}
-          </p>
-          <p className="mt-1 font-mono text-sm text-muted">{out.action}</p>
-          <p className="mt-3 text-sm text-fg">{line}</p>
-          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 rounded-panel bg-bg px-3 py-3 font-mono text-xs tabular-nums text-fg">
-            <span>
-              <span className="text-muted">REQ </span>
-              M{input.model} P{bit(input.paid)} B{bit(input.burst)} R{bit(input.risk)} T{bit(input.ticketOk)}
-            </span>
-            <span>
-              <span className="text-muted">ROUTE </span>
-              A{bit(out.allow)} D{bit(out.degrade)} R{bit(out.refuse)} H{bit(out.tierHi)}
-            </span>
-            <span className="text-copper">{out.action}</span>
-          </div>
-        </section>
-
-        <section className="rounded-panel border border-line bg-surface p-4 lg:col-span-2">
-          <PanelHead icon={<TrainFront className="size-4 text-copper" />} title={copy.tracks} en="TRACKS" />
-          <ul>
+        <section className="mt-4" aria-label={copy.tracks}>
+          <ul className="grid grid-cols-5 gap-2">
             {TRACKS.map((track) => {
               const on = out.action === track.id;
               return (
-                <li key={track.id} className="flex items-center gap-3 border-b border-line py-2 last:border-b-0">
-                  <span className="w-20 shrink-0">
-                    <span className={"block text-sm " + (on ? "text-fg" : "text-muted")}>{copy.trackNames[track.id]}</span>
-                    <span className="font-mono text-xs text-muted">{track.en}</span>
-                  </span>
-                  <span className="relative h-px flex-1 bg-line" aria-hidden>
-                    <span
-                      className={"bead absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 " + (on ? "bead-on" : "")}
-                      data-track={track.id}
-                    />
-                  </span>
-                  <span className={"hidden max-w-64 shrink-0 text-right text-xs sm:block " + (on ? "text-fg" : "text-muted")}>
-                    {copy.trackNotes[track.id]}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-          <p className="mt-2 text-xs text-muted sm:hidden">{copy.trackNotes[out.action]}</p>
-          <p className="mt-2 font-mono text-xs text-copper">{copy.horns[out.action]}</p>
-        </section>
-
-        <section className="rounded-panel border border-line bg-surface p-4 lg:col-span-2">
-          <PanelHead icon={<Cpu className="size-4 text-copper" />} title={copy.netlist} en="NETLIST" />
-          <p className="mb-3 text-sm text-muted">{copy.netlistLead}</p>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            <Gate
-              name="pass"
-              formula="paid ∨ lite ∨ ticket_ok"
-              hot={explained.pass}
-              tone="go"
-              inputs={[
-                ["paid", input.paid],
-                ["lite", explained.lite],
-                ["ticket_ok", input.ticketOk],
-              ]}
-            />
-            <Gate
-              name="allow"
-              formula="¬risk ∧ pass"
-              hot={out.allow}
-              tone="go"
-              inputs={[
-                ["¬risk", explained.riskClear],
-                ["pass", explained.pass],
-              ]}
-            />
-            <Gate
-              name="degrade"
-              formula="allow ∧ burst ∧ ¬lite"
-              hot={out.degrade}
-              tone="warn"
-              inputs={[
-                ["allow", out.allow],
-                ["burst", input.burst],
-                ["¬lite", explained.notLite],
-              ]}
-            />
-            <Gate name="refuse" formula="¬allow" hot={out.refuse} tone="stop" inputs={[["allow", out.allow]]} />
-            <Gate
-              name="tier_hi"
-              formula="allow ∧ ¬degrade ∧ frontier"
-              hot={out.tierHi}
-              tone="go"
-              inputs={[
-                ["allow", out.allow],
-                ["¬degrade", !out.degrade],
-                ["frontier", explained.frontier],
-              ]}
-            />
-            <div className="rounded-panel border border-line bg-bg p-3">
-              <p className="font-mono text-xs text-copper">{copy.priority}</p>
-              <ol className="mt-2 grid gap-1 text-sm text-fg">
-                {copy.priorityLines.map((step) => (
-                  <li key={step}>{step}</li>
-                ))}
-              </ol>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-panel border border-line bg-surface p-4">
-          <PanelHead icon={<ListChecks className="size-4 text-copper" />} title={copy.truth} en="TRUTH" />
-          <p className="text-sm text-muted">{copy.truthLead}</p>
-          <ul className="mt-3 grid gap-2">
-            {RELAY_TRUTH_CASES.map((item) => {
-              const row = evalRelay(item.in);
-              const active = sameWord(input, item.in);
-              return (
-                <li key={item.note}>
-                  <button
-                    type="button"
+                <li key={track.id}>
+                  <div
                     className={
-                      "tap w-full rounded-panel border px-3 py-2 text-left " +
-                      (active ? "border-copper bg-surface-2" : "border-line bg-bg")
+                      "flex min-h-16 flex-col justify-between rounded-panel border px-2 py-2 sm:px-3 " +
+                      (on ? "border-copper bg-surface" : "border-line bg-surface/60")
                     }
-                    onClick={() => apply(item.in)}
                   >
-                    <span className="block text-sm">{copy.cases[item.note as keyof typeof copy.cases] ?? item.note}</span>
-                    <span className="mt-1 block font-mono text-xs text-muted">
-                      M{item.in.model} P{bit(item.in.paid)} B{bit(item.in.burst)} R{bit(item.in.risk)} T{bit(item.in.ticketOk)} → {row.action}
-                    </span>
-                  </button>
+                    <span className={"bead " + (on ? "bead-on" : "")} data-track={track.id} aria-hidden />
+                    <span className={"mt-2 text-xs sm:text-sm " + (on ? "text-fg" : "text-muted")}>{copy.trackNames[track.id]}</span>
+                    <span className="font-mono text-xs tracking-wide text-muted">{track.en}</span>
+                  </div>
                 </li>
               );
             })}
           </ul>
-          <button
-            type="button"
-            className="tap mt-3 min-h-11 rounded-full border border-line px-3 text-sm"
-            aria-expanded={showAll}
-            onClick={() => setShowAll((open) => !open)}
-          >
-            {showAll ? copy.hideAll : copy.showAll}
-          </button>
-          {showAll ? (
-            <ul className="mt-3 max-h-80 overflow-y-auto rounded-panel border border-line">
-              {rows.map((row) => {
-                const active = sameWord(input, row.in);
-                return (
-                  <li key={`${row.in.model}${bit(row.in.paid)}${bit(row.in.burst)}${bit(row.in.risk)}${bit(row.in.ticketOk)}`}>
-                    <button
-                      type="button"
-                      className={
-                        "tap flex min-h-11 w-full items-center justify-between gap-3 border-b border-line px-3 text-left font-mono text-xs last:border-b-0 " +
-                        (active ? "bg-surface-2 text-fg" : "text-muted")
-                      }
-                      onClick={() => apply(row.in)}
-                    >
-                      <span>
-                        M{row.in.model} P{bit(row.in.paid)} B{bit(row.in.burst)} R{bit(row.in.risk)} T{bit(row.in.ticketOk)}
-                      </span>
-                      <span className={active ? "text-copper" : ""}>{row.out.action}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
+          <p className="mt-2 text-sm text-muted">
+            {copy.trackNotes[out.action]}
+            <span className="mx-2 text-line">·</span>
+            {copy.horns[out.action]}
+          </p>
         </section>
 
-        <section className="rounded-panel border border-line bg-surface p-4">
-          <PanelHead icon={<Ticket className="size-4 text-copper" />} title={copy.ticket} en="TICKET" />
-          <p className="text-sm text-muted">{copy.ticketLead}</p>
-          <p className="mt-2 font-mono text-xs text-muted">valid = ok ∧ mobile</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="tap min-h-12 rounded-full bg-copper px-4 text-sm text-ink disabled:opacity-60"
-              disabled={proof.phase === "running"}
-              onClick={() => void startProof()}
-            >
-              {proof.phase === "running" ? copy.proofRunning : copy.proofStart}
-            </button>
-            {proof.phase === "running" ? (
-              <button type="button" className="tap min-h-12 rounded-full border border-line px-4 text-sm" onClick={stopProof}>
-                {copy.stop}
+        <div className="mt-6">
+          <div role="tablist" aria-label={copy.plaque} className="flex gap-1 overflow-x-auto border-b border-line">
+            {TABS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={tab === id}
+                className={
+                  "tap shrink-0 border-b-2 px-3 py-2.5 text-sm " +
+                  (tab === id ? "border-copper text-fg" : "border-transparent text-muted")
+                }
+                onClick={() => setTab(id)}
+              >
+                {tabLabel[id]}
               </button>
-            ) : null}
+            ))}
           </div>
-          {proof.phase === "running" ? (
-            <div className="mt-3">
-              <div className="scan" />
-              <p className="mt-2 font-mono text-xs tabular-nums text-muted">
-                nonce {proof.nonce} · {proof.elapsed} ms
-              </p>
+
+          {tab === "net" ? (
+            <section className="py-4" role="tabpanel">
+              <p className="max-w-2xl text-sm text-muted">{copy.netlistLead}</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <Gate
+                  name="pass"
+                  formula="paid ∨ lite ∨ ticket_ok"
+                  hot={explained.pass}
+                  tone="go"
+                  inputs={[
+                    ["paid", input.paid],
+                    ["lite", explained.lite],
+                    ["ticket_ok", input.ticketOk],
+                  ]}
+                />
+                <Gate
+                  name="allow"
+                  formula="¬risk ∧ pass"
+                  hot={out.allow}
+                  tone="go"
+                  inputs={[
+                    ["¬risk", explained.riskClear],
+                    ["pass", explained.pass],
+                  ]}
+                />
+                <Gate
+                  name="degrade"
+                  formula="allow ∧ burst ∧ ¬lite"
+                  hot={out.degrade}
+                  tone="warn"
+                  inputs={[
+                    ["allow", out.allow],
+                    ["burst", input.burst],
+                    ["¬lite", explained.notLite],
+                  ]}
+                />
+                <Gate name="refuse" formula="¬allow" hot={out.refuse} tone="stop" inputs={[["allow", out.allow]]} />
+                <Gate
+                  name="tier_hi"
+                  formula="allow ∧ ¬degrade ∧ frontier"
+                  hot={out.tierHi}
+                  tone="go"
+                  inputs={[
+                    ["allow", out.allow],
+                    ["¬degrade", !out.degrade],
+                    ["frontier", explained.frontier],
+                  ]}
+                />
+                <div className="rounded-panel border border-line bg-surface p-3">
+                  <p className="font-mono text-xs text-copper">{copy.priority}</p>
+                  <ol className="mt-2 grid gap-1 text-sm">
+                    {copy.priorityLines.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
+            </section>
+          ) : null}
+
+          {tab === "truth" ? (
+            <section className="py-4" role="tabpanel">
+              <p className="max-w-2xl text-sm text-muted">{copy.truthLead}</p>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                {RELAY_TRUTH_CASES.map((item) => {
+                  const row = evalRelay(item.in);
+                  const active = sameWord(input, item.in);
+                  return (
+                    <li key={item.note}>
+                      <button
+                        type="button"
+                        className={
+                          "tap w-full rounded-panel border px-3 py-2.5 text-left " +
+                          (active ? "border-copper bg-surface" : "border-line bg-bg")
+                        }
+                        onClick={() => apply(item.in)}
+                      >
+                        <span className="block text-sm">{copy.cases[item.note as keyof typeof copy.cases] ?? item.note}</span>
+                        <span className="mt-1 block font-mono text-xs text-muted">
+                          M{item.in.model} P{bit(item.in.paid)} B{bit(item.in.burst)} R{bit(item.in.risk)} T{bit(item.in.ticketOk)} → {row.action}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <button
+                type="button"
+                className="tap mt-3 min-h-10 rounded-full border border-line px-3 text-sm"
+                aria-expanded={showAll}
+                onClick={() => setShowAll((open) => !open)}
+              >
+                {showAll ? copy.hideAll : copy.showAll}
+              </button>
+              {showAll ? (
+                <ul className="mt-3 max-h-80 overflow-y-auto rounded-panel border border-line">
+                  {rows.map((row) => {
+                    const active = sameWord(input, row.in);
+                    return (
+                      <li key={`${row.in.model}${bit(row.in.paid)}${bit(row.in.burst)}${bit(row.in.risk)}${bit(row.in.ticketOk)}`}>
+                        <button
+                          type="button"
+                          className={
+                            "tap flex min-h-11 w-full items-center justify-between gap-3 border-b border-line px-3 text-left font-mono text-xs last:border-b-0 " +
+                            (active ? "bg-surface text-fg" : "text-muted")
+                          }
+                          onClick={() => apply(row.in)}
+                        >
+                          <span>
+                            M{row.in.model} P{bit(row.in.paid)} B{bit(row.in.burst)} R{bit(row.in.risk)} T{bit(row.in.ticketOk)}
+                          </span>
+                          <span className={active ? "text-copper" : ""}>{row.out.action}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : null}
+            </section>
+          ) : null}
+
+          {tab === "ticket" ? (
+            <section className="max-w-xl py-4" role="tabpanel">
+              <p className="text-sm leading-relaxed text-muted">{copy.ticketLead}</p>
+              <p className="mt-2 font-mono text-xs text-muted">valid = ok ∧ mobile</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="tap min-h-11 rounded-full bg-copper px-4 text-sm text-ink disabled:opacity-60"
+                  disabled={proof.phase === "running"}
+                  onClick={() => void startProof()}
+                >
+                  {proof.phase === "running" ? copy.proofRunning : copy.proofStart}
+                </button>
+                {proof.phase === "running" ? (
+                  <button type="button" className="tap min-h-11 rounded-full border border-line px-4 text-sm" onClick={stopProof}>
+                    {copy.stop}
+                  </button>
+                ) : null}
+              </div>
+              {proof.phase === "running" ? (
+                <div className="mt-3">
+                  <div className="scan" />
+                  <p className="mt-2 font-mono text-xs tabular-nums text-muted">
+                    nonce {proof.nonce} · {proof.elapsed} ms
+                  </p>
+                </div>
+              ) : null}
+              {proof.phase === "done" ? (
+                <div className="mt-3 rounded-panel border border-line bg-surface p-3 font-mono text-xs break-all">
+                  <p>{proof.ticket ? copy.proofOk : copy.proofFail}</p>
+                  <p className="mt-2 text-muted">
+                    nonce {proof.nonce} · {proof.elapsed} ms · ok {String(proof.ok)} · ticket {String(proof.ticket)}
+                  </p>
+                  <p className="mt-2 text-muted">{proof.hash || "—"}</p>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
+          {tab === "wafer" ? (
+            <div className="py-4" role="tabpanel">
+              <Foundry
+                copy={copy}
+                wallet={wallet}
+                running={playing}
+                out={out}
+                pass={explained.pass}
+                lite={explained.lite}
+                blocked={blocked}
+                onNand={reportNand}
+                onRun={playSpec}
+              />
             </div>
           ) : null}
-          {proof.phase === "done" ? (
-            <div className="mt-3 rounded-panel bg-bg p-3 font-mono text-xs break-all text-fg">
-              <p>{proof.ticket ? copy.proofOk : copy.proofFail}</p>
-              <p className="mt-2 text-muted">
-                nonce {proof.nonce} · {proof.elapsed} ms · ok {String(proof.ok)} · ticket {String(proof.ticket)}
-              </p>
-              <p className="mt-2 text-muted">{proof.hash || "—"}</p>
-            </div>
+
+          {tab === "plate" ? (
+            <section className="py-4" role="tabpanel">
+              <p className="max-w-2xl text-sm text-muted">{chain.status === "unconfigured" ? copy.chainPending : copy.chainTodo}</p>
+              <div className="mt-4 grid gap-px overflow-hidden rounded-panel border border-line bg-line sm:grid-cols-2">
+                <Fact label="Processor" value={CONFIG.processor} note={copy.processorNote} />
+                <Fact label="Relay" value={CONFIG.relayCircuitId} note="6 in / 4 out / 27 NAND" />
+                <Fact label="Deployer" value={CONFIG.deployer} note={copy.deployerNote} />
+                <Fact
+                  label="Minted"
+                  value={`${CONFIG.minted} / ${CONFIG.supply}`}
+                  note={`NAND ${CONFIG.heldNand} · LATCH ${CONFIG.heldLatch}`}
+                />
+                <Fact label="Create tx" value={CONFIG.processorTx} />
+                <Fact label="Relay tx" value={CONFIG.relayTx} />
+                <Fact label="Sample" value={CONFIG.sampleCircuitId} note="100 + 50 = 150" />
+                <Fact label="NAND gate" value={CONFIG.nandCircuitId} note="2 in / 1 out" />
+              </div>
+              <ul className="mt-4 grid gap-1 text-sm text-muted">
+                <li>{copy.gateScene}</li>
+                <li>{copy.gateDemo}</li>
+                <li>{copy.gateProcessor}</li>
+                <li>{copy.gateTape}</li>
+              </ul>
+              <a
+                className="tap mt-4 inline-flex min-h-11 items-center rounded-full bg-copper px-4 text-sm text-ink"
+                href={CONFIG.tapeoutProcessorUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {copy.tapeout}
+              </a>
+              <p className="mt-4 text-sm text-muted">{copy.disclaimer}</p>
+            </section>
           ) : null}
-        </section>
-
-        <Foundry
-          copy={copy}
-          wallet={wallet}
-          running={playing}
-          out={out}
-          pass={explained.pass}
-          lite={explained.lite}
-          blocked={blocked}
-          onNand={reportNand}
-          onRun={playSpec}
-        />
-
-        <section className="rounded-panel border border-line bg-surface p-4 lg:col-span-2">
-          <PanelHead icon={<Cable className="size-4 text-copper" />} title={copy.plaque} en="TAPE-OUT" />
-          <p className="text-sm text-fg">{chain.status === "unconfigured" ? copy.chainPending : copy.chainTodo}</p>
-          <details className="mt-3">
-            <summary className="tap cursor-pointer text-sm text-copper">3.2.250 · {CONFIG.processorName}</summary>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <Fact
-              label={copy.walletFact}
-              value={wallet.address ?? "—"}
-              note={wallet.address ? (wallet.onXLayer ? `X Layer · ${wallet.okb ?? "—"} OKB` : copy.wrongChain) : copy.walletFactNote}
-            />
-            <Fact label="Processor" value={CONFIG.processor} note={copy.processorNote} />
-            <Fact label="Transistors" value={CONFIG.transistors} note={CONFIG.processorName} />
-            <Fact label="Deployer" value={CONFIG.deployer} note={copy.deployerNote} />
-            <Fact label="Create tx" value={CONFIG.processorTx} />
-            <Fact
-              label="Minted"
-              value={`${CONFIG.minted} / ${CONFIG.supply}`}
-              note={`NAND ${CONFIG.heldNand} · LATCH ${CONFIG.heldLatch}`}
-            />
-            <Fact label="Relay" value={CONFIG.relayCircuitId} note="6 in / 4 out / 27 NAND" />
-            <Fact label="Relay tx" value={CONFIG.relayTx} />
-            <Fact label="Sample circuit" value={CONFIG.sampleCircuitId} note="100 + 50 = 150" />
-            <Fact label="NAND circuit" value={CONFIG.nandCircuitId} note="2 in / 1 out" />
-            <Fact label="NAND tx" value={CONFIG.nandTx} />
-            <Fact label="Ticket circuit" value={CONFIG.ticketCircuitId || "—"} />
-            <Fact label="Unit price" value={CONFIG.unitPriceLabel === "set after deploy" ? copy.pricePending : CONFIG.unitPriceLabel} />
-            </div>
-          </details>
-          <div className="mt-3 rounded-panel border border-line bg-bg p-3">
-            <p className="text-sm text-copper">{copy.gateTitle}</p>
-            <ul className="mt-2 space-y-1 text-sm text-fg">
-              <li>{copy.gateScene}</li>
-              <li>{copy.gateDemo}</li>
-              <li>{copy.gateProcessor}</li>
-              <li>{copy.gateTape}</li>
-            </ul>
-            <a
-              className="tap mt-3 inline-flex min-h-11 items-center rounded-full bg-copper px-4 text-sm text-ink"
-              href={CONFIG.tapeoutProcessorUrl}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {copy.tapeout}
-            </a>
-          </div>
-          <p className="mt-2 text-sm text-muted">{copy.disclaimer}</p>
-          <p className="mt-3 font-mono text-xs text-muted">{copy.motto}</p>
-        </section>
+        </div>
       </main>
     </div>
   );
@@ -648,15 +673,16 @@ function SunMark() {
   );
 }
 
-function PanelHead({ icon, title, en }: { icon: ReactNode; title: string; en: string }) {
+function SoundMark({ on }: { on: boolean }) {
   return (
-    <div className="mb-3 flex items-baseline justify-between gap-3">
-      <h2 className="flex items-center gap-2 text-lg">
-        {icon}
-        {title}
-      </h2>
-      <span className="font-mono text-xs tracking-widest text-muted">{en}</span>
-    </div>
+    <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
+      <path fill="currentColor" d="M4 9.5h3.2L11 6.2v11.6L7.2 14.5H4z" />
+      {on ? (
+        <path fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" d="M14.2 9.2a3.6 3.6 0 0 1 0 5.6M16.6 7a6.4 6.4 0 0 1 0 10" />
+      ) : (
+        <path fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" d="M15 9.5l5 5M20 9.5l-5 5" />
+      )}
+    </svg>
   );
 }
 
@@ -676,7 +702,7 @@ function Gate({
   const edge = !hot ? "border-line" : tone === "warn" ? "border-amber" : tone === "stop" ? "border-signal" : "border-phosphor";
   const ink = !hot ? "text-muted" : tone === "warn" ? "text-amber" : tone === "stop" ? "text-signal" : "text-phosphor";
   return (
-    <div className={"rounded-panel border bg-bg p-3 " + edge}>
+    <div className={"rounded-panel border bg-surface p-3 " + edge}>
       <div className="flex flex-wrap gap-1.5">
         {inputs.map(([label, on]) => (
           <span
@@ -700,9 +726,9 @@ function Gate({
 
 function Fact({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <div>
+    <div className="bg-bg px-3 py-3">
       <p className="font-mono text-xs text-muted">{label}</p>
-      <p className="mt-1 font-mono text-sm break-all text-fg">{value}</p>
+      <p className="mt-1 font-mono text-sm break-all">{value}</p>
       {note ? <p className="mt-1 text-xs text-muted">{note}</p> : null}
     </div>
   );

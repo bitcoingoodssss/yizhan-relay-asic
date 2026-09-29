@@ -1,86 +1,25 @@
-# YiZhan Relay ASIC
+# 元站车载联锁 · Yuan Station
 
-X Layer TapeOut hackathon entry. 驿站联锁台。
+X Layer 上的人工智能汽车请求联锁。处理器不挖官方 $BEM，晶体管只用于流片。
 
-This processor does not mine official $BEM.
-Transistors are tape-out materials only.
-对照灯，不对照币价。
+## 链上
 
-请求字决定模型进路：慢车免票，风险否决一切，拥塞只把非慢车压进侧线。页面上的灯、股道和网表都调用 `evalRelay`，不另写一套答案。
+- 链：X Layer，196
+- 处理器：`0x7F2D3131A76D9aEfb49F44657DA6e1AcAC334687`
+- 晶体管：`0xd32eDFD4385653e906c414BaB8B59483C752f362`
+- 创建者：`0x0A9102cbaADEc6C2593Fb86f271A0431281e3E12`
+- 联锁电路：`3.2.250`（6 入 / 4 出 / 27 NAND）
+- 流片交易：`0x7229d125d85f7edd1cd83f712fb9a9e27b06d0f0bef92aac55205244749faf5e`
 
-## On-chain
+`evalRelay` 在 `src/circuit/relay.ts`。车速和急刹由 `src/vehicle/map.ts` 收成同一份请求字。联锁不控制方向盘。
 
-流片完成后只改 `src/config.ts`。
+## 本地
 
-| 字段 | 现在 |
-| --- | --- |
-| Chain | X Layer · 196 |
-| Name / symbol | Yuan Station · YZST |
-| Processor（电路合约，详情页蓝地址） | `0x7F2D3131A76D9aEfb49F44657DA6e1AcAC334687` |
-| Transistors | `0xd32eDFD4385653e906c414BaB8B59483C752f362` |
-| Deploy wallet | `0x0A9102cbaADEc6C2593Fb86f271A0431281e3E12` |
-| Create tx | `0x2b9ec5d182eb6a443f01fb991d16b4d2de4eccaa66bb5c71bd8caed4759bfe69` |
-| Supply / mint price | 32768 · 0.0001 OKB |
-| Minted / held | 191 · NAND 0 · LATCH 21 |
-| Relay | `3.2.250` · eval 编号 3 · 6 入 / 4 出 / 27 门 |
-| Relay tx | `0x7229d125d85f7edd1cd83f712fb9a9e27b06d0f0bef92aac55205244749faf5e` |
-| Circuit 1 | `1.2.250` · 示例 100+50=150 · 140 门 |
-| Circuit 2 | `2.2.250` · 与非门 · 3 门 |
-
-Processor 是工厂 `CPUCreated` 事件里的 circuits 合约，不是部署钱包。电路 `3.2.250` 是车载联锁，交易输入和本仓库网表逐字节相同：6 个输入、4 个输出、27 个 NAND。页面灯仍调用本机 `evalRelay`。`1.2.250` 是示例加法，`2.2.250` 是与非门。
-
-## Boolean
-
-```text
-pass     = paid ∨ (model = 0) ∨ ticket_ok
-allow    = ¬risk ∧ pass
-degrade  = allow ∧ burst ∧ (model ≠ 0)
-refuse   = ¬allow
-tier_hi  = allow ∧ ¬degrade ∧ (model = 2)
-action   = degraded if allow ∧ degrade
-           else lite | std | frontier by model
-           else refuse
-ticket   = ok ∧ mobile
+```bash
+npm install
+npm run dev
 ```
 
-`tier_hi` 只在特快、放行、且没有被拥塞降级时点亮。降级后的动作是 `degraded`，不再叫 frontier。
+## DeWeb
 
-## Relay truth table
-
-来源：`src/circuit/relay.ts` 的 `RELAY_TRUTH_CASES`。测试锁在 `src/circuit/relay.test.ts`。
-
-| model | paid | burst | risk | ticket | allow | degrade | refuse | tier_hi | action | 说明 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | lite | 空车慢车 |
-| 2 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | refuse | 空车特快 |
-| 2 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | 1 | frontier | 付费特快 |
-| 2 | 1 | 1 | 0 | 0 | 1 | 1 | 0 | 0 | degraded | 拥塞降级 |
-| 2 | 1 | 0 | 1 | 0 | 0 | 0 | 1 | 0 | refuse | 风险锁闭 |
-| 2 | 0 | 0 | 0 | 1 | 1 | 0 | 0 | 1 | frontier | 资格票打开特快 |
-
-48 个请求字（3 档 × 4 个开关）由 `enumerateRelay()` 在页面上现算。
-
-## 资格证明
-
-`src/pow/mobileProof.ts` 在本机寻找 `SHA-256("yizhan:" + nonce)` 以 `000` 开头的 nonce。15 秒内找到，`evalTicket({ ok, mobile: true })` 才有效，并拨上 `ticket_ok`。
-
-这不是挖矿。没有奖励，不出块，不能挖官方 $BEM。
-
-## Run demo
-
-打开联锁台（`/` 或 `/asic`）。右上角切换 **中文 / EN**，电路名词（allow、lite、frontier）两种语言都保留。
-
-1. 台上默认是「空车特快」，refuse 灯亮。
-2. 拨到慢车，或打开已付费，灯会换成放行。
-3. 付费特快再打开突发，动作变成侧线，`tier_hi` 熄灭。
-4. 打开风险，无论付费与否都锁闭。
-5. 「按规格走一遍」会依次点亮上面六行。
-6. 「跑本机资格证明」通过后自动拨上资格票。
-7. 「连接钱包」请求 OKX Wallet 或 MetaMask，并切到 X Layer（196）。预览框里插件进不来时，用「在新标签打开」。灯仍由本机 `evalRelay` 点亮。
-
-流片网表必须对同一组请求字点亮同一组灯。
-
-## Not in this repo
-
-- 不挖 $BEM，不发收益，不刷量。
-- 不在地址未填时假装读到了链上 eval。
+`deweb-dist/` 是静态站，根上有 `index.html`。上传这个文件夹或它的 zip。单个文件都小于 8.4 MB。网关没有 Node 服务器，所以不要传仓库源码。

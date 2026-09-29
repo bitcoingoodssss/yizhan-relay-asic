@@ -1,5 +1,6 @@
 import type { NarrationId } from "../circuit/narrate.ts";
 import type { ModelTier, RelayOutput } from "../circuit/types.ts";
+import type { RoadScene } from "../vehicle/map.ts";
 
 export type Locale = "zh" | "en";
 
@@ -21,6 +22,20 @@ type LampKey = "allow" | "degrade" | "refuse" | "tierHi";
 export interface Copy {
   title: string;
   lead: string;
+  vehicle: {
+    kicker: string;
+    hand: string;
+    road: string;
+    car: string;
+    play: string;
+    playing: string;
+    armed: string;
+    denied: string;
+    handNote: string;
+    speed: string;
+    rule: string;
+    scenes: Record<RoadScene, string>;
+  };
   langSwitch: string;
   request: string;
   route: string;
@@ -114,6 +129,20 @@ export const COPY: Record<Locale, Copy> = {
   zh: {
     title: "元站车载联锁",
     lead: "人工智能汽车的请求先过这道联锁。本地辅助免订阅，危险工况锁死，路况拥塞只把高档请求降级。不是挖矿。",
+    vehicle: {
+      kicker: "车端",
+      hand: "手拨",
+      road: "路测",
+      car: "本机",
+      play: "播放这段路",
+      playing: "路测进行中",
+      armed: "手机就是车端。摇晃超过急刹，危险位锁闭两秒。车速来自定位，没有定位就不编拥塞。",
+      denied: "这台设备没有开放运动传感器。路测回放照样能走完。",
+      handNote: "手拨只用于对真值表。车上由车速、加速度和请求档生成同一份请求字。",
+      speed: "车速",
+      rule: "智驾请求低于 50 km/h 记为拥塞，只降级。加速度超过 6 m/s² 或横摆过猛，整车锁闭。联锁不碰方向盘。",
+      scenes: { park: "起步", city: "城市", highway: "高速", jam: "拥塞", hazard: "急刹", recover: "接管" },
+    },
     langSwitch: "语言",
     request: "车端请求",
     route: "放行灯",
@@ -249,6 +278,20 @@ export const COPY: Record<Locale, Copy> = {
   en: {
     title: "Yuan Station",
     lead: "An AI car's model request passes this interlock first. Local assist is free. A hazard locks everything. Congestion only degrades the higher tiers. Not a miner.",
+    vehicle: {
+      kicker: "VEHICLE",
+      hand: "Manual",
+      road: "Road test",
+      car: "This device",
+      play: "Play this road",
+      playing: "Road test running",
+      armed: "This phone is the car. A shake harder than a panic stop locks risk for two seconds. Speed comes from location. No fix, no invented jam.",
+      denied: "Motion sensors are blocked on this device. The recorded road still runs.",
+      handNote: "Manual levers check the truth table. In a car, speed, acceleration, and the requested tier build the same word.",
+      speed: "Speed",
+      rule: "A highway request under 50 km/h is congestion and only degrades. Acceleration past 6 m/s², or a hard yaw, locks the car. The interlock never steers.",
+      scenes: { park: "Park", city: "City", highway: "Highway", jam: "Jam", hazard: "Brake", recover: "Assist" },
+    },
     langSwitch: "Language",
     request: "Vehicle request",
     route: "Clearance",
