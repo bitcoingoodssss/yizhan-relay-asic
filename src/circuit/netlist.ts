@@ -15,11 +15,8 @@ function builder(nIn: number) {
 }
 
 function withBuffers(ops: Op[], nand: (a: number, b: number) => number, outs: number[]) {
-  const buffered: number[] = [];
-  for (const signal of outs) {
-    const inverted = nand(signal, signal);
-    buffered.push(nand(inverted, inverted));
-  }
+  const inverted = outs.map((signal) => nand(signal, signal));
+  const buffered = inverted.map((signal) => nand(signal, signal));
   return { ops, buffered };
 }
 

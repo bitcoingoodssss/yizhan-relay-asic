@@ -187,7 +187,7 @@ export function Foundry({
   const due = books ? mintValue(books.mintPrice, books.protocolFee) : null;
 
   return (
-    <section className="min-w-0 rounded-panel border border-line bg-surface p-4 lg:col-span-2">
+    <section className="min-w-0 rounded-panel border border-line bg-surface p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
         <h2 className="flex items-center gap-2 text-lg">
           <Cpu className="size-4 text-copper" />

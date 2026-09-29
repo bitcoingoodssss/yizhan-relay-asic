@@ -260,18 +260,7 @@ export function RelayDesk() {
       <WalletBar copy={copy} wallet={wallet} />
 
       <main className="mx-auto grid max-w-5xl gap-4 px-4 py-4 lg:grid-cols-2">
-        <Foundry
-          copy={copy}
-          wallet={wallet}
-          running={playing}
-          out={out}
-          pass={explained.pass}
-          lite={explained.lite}
-          blocked={blocked}
-          onNand={reportNand}
-          onRun={playSpec}
-        />
-        <section className="min-w-0 rounded-panel border border-line bg-surface p-4 max-lg:order-2">
+        <section className="min-w-0 rounded-panel border border-line bg-surface p-4">
           <PanelHead icon={<Cpu className="size-4 text-copper" />} title={copy.request} en="REQUEST" />
           <div role="radiogroup" aria-label={copy.modelGroup} className="grid grid-cols-3 overflow-hidden rounded-full border border-line">
             {TIERS.map((tier) => {
@@ -350,7 +339,7 @@ export function RelayDesk() {
           </div>
         </section>
 
-        <section className="rounded-panel border border-line bg-surface p-4 max-lg:order-1" aria-live="polite">
+        <section className="rounded-panel border border-line bg-surface p-4" aria-live="polite">
           <PanelHead icon={<TrainFront className="size-4 text-copper" />} title={copy.route} en="ROUTE" />
           <div className="grid grid-cols-4 gap-2">
             {LAMPS.map((lamp) => {
@@ -574,9 +563,24 @@ export function RelayDesk() {
           ) : null}
         </section>
 
+        <Foundry
+          copy={copy}
+          wallet={wallet}
+          running={playing}
+          out={out}
+          pass={explained.pass}
+          lite={explained.lite}
+          blocked={blocked}
+          onNand={reportNand}
+          onRun={playSpec}
+        />
+
         <section className="rounded-panel border border-line bg-surface p-4 lg:col-span-2">
           <PanelHead icon={<Cable className="size-4 text-copper" />} title={copy.plaque} en="TAPE-OUT" />
-          <div className="grid gap-3 sm:grid-cols-2">
+          <p className="text-sm text-fg">{chain.status === "unconfigured" ? copy.chainPending : copy.chainTodo}</p>
+          <details className="mt-3">
+            <summary className="tap cursor-pointer text-sm text-copper">3.2.250 · {CONFIG.processorName}</summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <Fact
               label={copy.walletFact}
               value={wallet.address ?? "—"}
@@ -591,14 +595,15 @@ export function RelayDesk() {
               value={`${CONFIG.minted} / ${CONFIG.supply}`}
               note={`NAND ${CONFIG.heldNand} · LATCH ${CONFIG.heldLatch}`}
             />
-            <Fact label="Sample circuit" value={CONFIG.relayCircuitId} note="100 + 50 = 150" />
-            <Fact label="Tape-out tx" value={CONFIG.relayTx} />
+            <Fact label="Relay" value={CONFIG.relayCircuitId} note="6 in / 4 out / 27 NAND" />
+            <Fact label="Relay tx" value={CONFIG.relayTx} />
+            <Fact label="Sample circuit" value={CONFIG.sampleCircuitId} note="100 + 50 = 150" />
             <Fact label="NAND circuit" value={CONFIG.nandCircuitId} note="2 in / 1 out" />
             <Fact label="NAND tx" value={CONFIG.nandTx} />
             <Fact label="Ticket circuit" value={CONFIG.ticketCircuitId || "—"} />
             <Fact label="Unit price" value={CONFIG.unitPriceLabel === "set after deploy" ? copy.pricePending : CONFIG.unitPriceLabel} />
-          </div>
-          <p className="mt-3 text-sm text-fg">{chain.status === "unconfigured" ? copy.chainPending : copy.chainTodo}</p>
+            </div>
+          </details>
           <div className="mt-3 rounded-panel border border-line bg-bg p-3">
             <p className="text-sm text-copper">{copy.gateTitle}</p>
             <ul className="mt-2 space-y-1 text-sm text-fg">
